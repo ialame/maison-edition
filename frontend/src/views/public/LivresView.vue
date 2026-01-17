@@ -30,7 +30,7 @@ async function loadLivres() {
     page.value = response.data
     livres.value = response.data.content
   } catch (error) {
-    console.error('Erreur lors du chargement des livres:', error)
+    console.error('خطأ في تحميل الكتب:', error)
   } finally {
     loading.value = false
   }
@@ -41,7 +41,7 @@ async function loadCategories() {
     const response = await categorieApi.getAll()
     categories.value = response.data
   } catch (error) {
-    console.error('Erreur lors du chargement des catégories:', error)
+    console.error('خطأ في تحميل التصنيفات:', error)
   }
 }
 
@@ -83,8 +83,8 @@ watch(() => route.query, () => {
     <div class="container-custom">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-4xl font-serif font-bold text-secondary-800 mb-4">Notre Catalogue</h1>
-        <p class="text-secondary-600">Découvrez notre sélection de livres</p>
+        <h1 class="text-4xl font-serif font-bold text-secondary-800 mb-4">مكتبتنا</h1>
+        <p class="text-secondary-600">اكتشف مجموعتنا من الكتب</p>
       </div>
 
       <!-- Filters -->
@@ -98,10 +98,10 @@ watch(() => route.query, () => {
                 <input
                   v-model="searchQuery"
                   type="text"
-                  placeholder="Rechercher..."
-                  class="input pr-10"
+                  placeholder="بحث..."
+                  class="input pl-10"
                 />
-                <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600">
+                <button type="submit" class="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -112,24 +112,24 @@ watch(() => route.query, () => {
 
           <!-- Categories -->
           <div>
-            <h3 class="font-semibold text-secondary-800 mb-3">Catégories</h3>
+            <h3 class="font-semibold text-secondary-800 mb-3">التصنيفات</h3>
             <ul class="space-y-2">
               <li>
                 <button
                   @click="selectCategorie(null)"
                   :class="[
-                    'w-full text-left px-3 py-2 rounded-md transition-colors',
+                    'w-full text-right px-3 py-2 rounded-md transition-colors',
                     !selectedCategorie ? 'bg-primary-100 text-primary-700' : 'text-secondary-600 hover:bg-secondary-100'
                   ]"
                 >
-                  Toutes les catégories
+                  جميع التصنيفات
                 </button>
               </li>
               <li v-for="cat in categories" :key="cat.id">
                 <button
                   @click="selectCategorie(cat.id)"
                   :class="[
-                    'w-full text-left px-3 py-2 rounded-md transition-colors',
+                    'w-full text-right px-3 py-2 rounded-md transition-colors',
                     selectedCategorie === cat.id ? 'bg-primary-100 text-primary-700' : 'text-secondary-600 hover:bg-secondary-100'
                   ]"
                 >
@@ -149,7 +149,7 @@ watch(() => route.query, () => {
 
           <template v-else>
             <div v-if="livres.length === 0" class="text-center py-12">
-              <p class="text-secondary-500">Aucun livre trouvé.</p>
+              <p class="text-secondary-500">لا توجد كتب.</p>
             </div>
 
             <div v-else>
@@ -159,23 +159,23 @@ watch(() => route.query, () => {
 
               <!-- Pagination -->
               <div v-if="page && page.totalPages > 1" class="mt-8 flex justify-center">
-                <nav class="flex items-center space-x-2">
+                <nav class="flex items-center gap-2">
                   <button
                     @click="goToPage(currentPage - 1)"
                     :disabled="page.first"
                     class="px-3 py-2 rounded-md border border-secondary-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-100"
                   >
-                    Précédent
+                    السابق
                   </button>
                   <span class="px-4 py-2 text-secondary-600">
-                    Page {{ currentPage + 1 }} sur {{ page.totalPages }}
+                    صفحة {{ currentPage + 1 }} من {{ page.totalPages }}
                   </span>
                   <button
                     @click="goToPage(currentPage + 1)"
                     :disabled="page.last"
                     class="px-3 py-2 rounded-md border border-secondary-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-100"
                   >
-                    Suivant
+                    التالي
                   </button>
                 </nav>
               </div>

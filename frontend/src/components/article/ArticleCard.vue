@@ -9,7 +9,7 @@ const props = defineProps<{
 
 const formattedDate = computed(() => {
   if (!props.article.datePublication) return ''
-  return new Date(props.article.datePublication).toLocaleDateString('fr-FR', {
+  return new Date(props.article.datePublication).toLocaleDateString('ar-SA', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'

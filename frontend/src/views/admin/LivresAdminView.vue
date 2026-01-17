@@ -18,8 +18,8 @@ const form = ref({
   prix: 0,
   nombrePages: 0,
   datePublication: '',
-  langue: 'Français',
-  format: 'Broché',
+  langue: 'العربية',
+  format: 'غلاف ورقي',
   disponible: true,
   enVedette: false,
   auteurIds: [] as number[],
@@ -37,7 +37,7 @@ async function loadData() {
     auteurs.value = auteursRes.data
     categories.value = categoriesRes.data
   } catch (error) {
-    console.error('Erreur lors du chargement:', error)
+    console.error('خطأ في التحميل:', error)
   } finally {
     loading.value = false
   }
@@ -54,8 +54,8 @@ function openModal(livre?: Livre) {
       prix: livre.prix || 0,
       nombrePages: livre.nombrePages || 0,
       datePublication: livre.datePublication || '',
-      langue: livre.langue || 'Français',
-      format: livre.format || 'Broché',
+      langue: livre.langue || 'العربية',
+      format: livre.format || 'غلاف ورقي',
       disponible: livre.disponible,
       enVedette: livre.enVedette,
       auteurIds: livre.auteurs?.map(a => a.id) || [],
@@ -71,8 +71,8 @@ function openModal(livre?: Livre) {
       prix: 0,
       nombrePages: 0,
       datePublication: '',
-      langue: 'Français',
-      format: 'Broché',
+      langue: 'العربية',
+      format: 'غلاف ورقي',
       disponible: true,
       enVedette: false,
       auteurIds: [],
@@ -107,17 +107,17 @@ async function saveForm() {
     showModal.value = false
     await loadData()
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
+    console.error('خطأ في الحفظ:', error)
   }
 }
 
 async function deleteLivre(id: number) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
+  if (confirm('هل أنت متأكد من حذف هذا الكتاب؟')) {
     try {
       await livreApi.delete(id)
       await loadData()
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
+      console.error('خطأ في الحذف:', error)
     }
   }
 }
@@ -128,9 +128,9 @@ onMounted(loadData)
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-secondary-800">Gestion des livres</h2>
+      <h2 class="text-2xl font-bold text-secondary-800">إدارة الكتب</h2>
       <button @click="openModal()" class="btn btn-primary">
-        + Ajouter un livre
+        + إضافة كتاب
       </button>
     </div>
 
@@ -142,44 +142,49 @@ onMounted(loadData)
       <table class="min-w-full divide-y divide-secondary-200">
         <thead class="bg-secondary-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Titre</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Auteur(s)</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Catégorie</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Prix</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Statut</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">العنوان</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">المؤلف</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">التصنيف</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">السعر</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الحالة</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">الإجراءات</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-secondary-200">
           <tr v-for="livre in livres" :key="livre.id">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="font-medium text-secondary-800">{{ livre.titre }}</div>
-              <div class="text-sm text-secondary-500">{{ livre.isbn }}</div>
+              <div class="text-sm text-secondary-500" dir="ltr">{{ livre.isbn }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
-              {{ livre.auteurs?.map(a => `${a.prenom} ${a.nom}`).join(', ') || '-' }}
+              {{ livre.auteurs?.map(a => `${a.prenom} ${a.nom}`).join('، ') || '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
               {{ livre.categorie?.nom || '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
-              {{ livre.prix ? `${livre.prix.toFixed(2)} €` : '-' }}
+              {{ livre.prix ? `${livre.prix.toFixed(2)} ر.س` : '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span :class="[
                 'px-2 py-1 text-xs rounded-full',
                 livre.disponible ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               ]">
-                {{ livre.disponible ? 'Disponible' : 'Indisponible' }}
+                {{ livre.disponible ? 'متوفر' : 'غير متوفر' }}
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-              <button @click="openModal(livre)" class="text-primary-600 hover:text-primary-800 mr-3">
-                Modifier
+            <td class="px-6 py-4 whitespace-nowrap text-left text-sm">
+              <button @click="openModal(livre)" class="text-primary-600 hover:text-primary-800 ml-3">
+                تعديل
               </button>
               <button @click="deleteLivre(livre.id)" class="text-red-600 hover:text-red-800">
-                Supprimer
+                حذف
               </button>
+            </td>
+          </tr>
+          <tr v-if="livres.length === 0">
+            <td colspan="6" class="px-6 py-12 text-center text-secondary-500">
+              لا توجد كتب. أضف كتابك الأول!
             </td>
           </tr>
         </tbody>
@@ -191,41 +196,46 @@ onMounted(loadData)
       <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b">
           <h3 class="text-lg font-semibold text-secondary-800">
-            {{ editingLivre ? 'Modifier le livre' : 'Ajouter un livre' }}
+            {{ editingLivre ? 'تعديل الكتاب' : 'إضافة كتاب جديد' }}
           </h3>
         </div>
         <form @submit.prevent="saveForm" class="p-6 space-y-4">
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Titre *</label>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">العنوان *</label>
             <input v-model="form.titre" type="text" required class="input" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-secondary-700 mb-1">ISBN</label>
-              <input v-model="form.isbn" type="text" class="input" />
+              <input v-model="form.isbn" type="text" class="input" dir="ltr" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Prix (€)</label>
-              <input v-model.number="form.prix" type="number" step="0.01" class="input" />
+              <label class="block text-sm font-medium text-secondary-700 mb-1">السعر (ر.س)</label>
+              <input v-model.number="form.prix" type="number" step="0.01" class="input" dir="ltr" />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Description</label>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">الوصف</label>
             <textarea v-model="form.description" rows="3" class="input"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">الملخص</label>
+            <textarea v-model="form.resume" rows="3" class="input"></textarea>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Auteur(s)</label>
+              <label class="block text-sm font-medium text-secondary-700 mb-1">المؤلف(ون)</label>
               <select v-model="form.auteurIds" multiple class="input h-24">
                 <option v-for="auteur in auteurs" :key="auteur.id" :value="auteur.id">
                   {{ auteur.prenom }} {{ auteur.nom }}
                 </option>
               </select>
+              <p class="text-xs text-secondary-500 mt-1">اضغط Ctrl للاختيار المتعدد</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Catégorie</label>
+              <label class="block text-sm font-medium text-secondary-700 mb-1">التصنيف</label>
               <select v-model="form.categorieId" class="input">
-                <option :value="null">-- Aucune --</option>
+                <option :value="null">-- بدون تصنيف --</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                   {{ cat.nom }}
                 </option>
@@ -234,34 +244,46 @@ onMounted(loadData)
           </div>
           <div class="grid grid-cols-3 gap-4">
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Nombre de pages</label>
-              <input v-model.number="form.nombrePages" type="number" class="input" />
+              <label class="block text-sm font-medium text-secondary-700 mb-1">عدد الصفحات</label>
+              <input v-model.number="form.nombrePages" type="number" class="input" dir="ltr" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Langue</label>
-              <input v-model="form.langue" type="text" class="input" />
+              <label class="block text-sm font-medium text-secondary-700 mb-1">اللغة</label>
+              <select v-model="form.langue" class="input">
+                <option value="العربية">العربية</option>
+                <option value="الإنجليزية">الإنجليزية</option>
+                <option value="الفرنسية">الفرنسية</option>
+              </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Format</label>
-              <input v-model="form.format" type="text" class="input" />
+              <label class="block text-sm font-medium text-secondary-700 mb-1">الشكل</label>
+              <select v-model="form.format" class="input">
+                <option value="غلاف ورقي">غلاف ورقي</option>
+                <option value="غلاف فني">غلاف فني</option>
+                <option value="كتاب إلكتروني">كتاب إلكتروني</option>
+              </select>
             </div>
           </div>
-          <div class="flex items-center space-x-6">
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">تاريخ النشر</label>
+            <input v-model="form.datePublication" type="date" class="input" dir="ltr" />
+          </div>
+          <div class="flex items-center gap-6">
             <label class="flex items-center">
-              <input v-model="form.disponible" type="checkbox" class="mr-2" />
-              Disponible
+              <input v-model="form.disponible" type="checkbox" class="ml-2" />
+              متوفر للبيع
             </label>
             <label class="flex items-center">
-              <input v-model="form.enVedette" type="checkbox" class="mr-2" />
-              En vedette
+              <input v-model="form.enVedette" type="checkbox" class="ml-2" />
+              كتاب مميز
             </label>
           </div>
-          <div class="flex justify-end space-x-3 pt-4">
+          <div class="flex justify-end gap-3 pt-4">
             <button type="button" @click="showModal = false" class="btn btn-secondary">
-              Annuler
+              إلغاء
             </button>
             <button type="submit" class="btn btn-primary">
-              {{ editingLivre ? 'Enregistrer' : 'Créer' }}
+              {{ editingLivre ? 'حفظ التعديلات' : 'إضافة الكتاب' }}
             </button>
           </div>
         </form>

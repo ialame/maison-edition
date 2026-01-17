@@ -19,7 +19,7 @@ async function loadData() {
     const response = await categorieApi.getAll()
     categories.value = response.data
   } catch (error) {
-    console.error('Erreur lors du chargement:', error)
+    console.error('خطأ في التحميل:', error)
   } finally {
     loading.value = false
   }
@@ -61,17 +61,17 @@ async function saveForm() {
     showModal.value = false
     await loadData()
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
+    console.error('خطأ في الحفظ:', error)
   }
 }
 
 async function deleteCategorie(id: number) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
+  if (confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
     try {
       await categorieApi.delete(id)
       await loadData()
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
+      console.error('خطأ في الحذف:', error)
     }
   }
 }
@@ -82,9 +82,9 @@ onMounted(loadData)
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-secondary-800">Gestion des catégories</h2>
+      <h2 class="text-2xl font-bold text-secondary-800">إدارة التصنيفات</h2>
       <button @click="openModal()" class="btn btn-primary">
-        + Ajouter une catégorie
+        + إضافة تصنيف
       </button>
     </div>
 
@@ -96,10 +96,10 @@ onMounted(loadData)
       <table class="min-w-full divide-y divide-secondary-200">
         <thead class="bg-secondary-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Nom</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Slug</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Livres</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الاسم</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الرابط</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الكتب</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">الإجراءات</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-secondary-200">
@@ -107,19 +107,24 @@ onMounted(loadData)
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="font-medium text-secondary-800">{{ categorie.nom }}</div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600" dir="ltr">
               {{ categorie.slug }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
-              {{ categorie.nombreLivres }}
+              {{ categorie.nombreLivres || 0 }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-              <button @click="openModal(categorie)" class="text-primary-600 hover:text-primary-800 mr-3">
-                Modifier
+            <td class="px-6 py-4 whitespace-nowrap text-left text-sm">
+              <button @click="openModal(categorie)" class="text-primary-600 hover:text-primary-800 ml-3">
+                تعديل
               </button>
               <button @click="deleteCategorie(categorie.id)" class="text-red-600 hover:text-red-800">
-                Supprimer
+                حذف
               </button>
+            </td>
+          </tr>
+          <tr v-if="categories.length === 0">
+            <td colspan="4" class="px-6 py-12 text-center text-secondary-500">
+              لا توجد تصنيفات. أضف تصنيفك الأول!
             </td>
           </tr>
         </tbody>
@@ -131,28 +136,28 @@ onMounted(loadData)
       <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
         <div class="p-6 border-b">
           <h3 class="text-lg font-semibold text-secondary-800">
-            {{ editingCategorie ? 'Modifier la catégorie' : 'Ajouter une catégorie' }}
+            {{ editingCategorie ? 'تعديل التصنيف' : 'إضافة تصنيف جديد' }}
           </h3>
         </div>
         <form @submit.prevent="saveForm" class="p-6 space-y-4">
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Nom *</label>
-            <input v-model="form.nom" type="text" required class="input" />
+            <label class="block text-sm font-medium text-secondary-700 mb-1">الاسم *</label>
+            <input v-model="form.nom" type="text" required class="input" placeholder="مثال: الرواية، الشعر، التاريخ" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Slug</label>
-            <input v-model="form.slug" type="text" class="input" placeholder="Généré automatiquement si vide" />
+            <label class="block text-sm font-medium text-secondary-700 mb-1">الرابط (Slug)</label>
+            <input v-model="form.slug" type="text" class="input" dir="ltr" placeholder="يُنشأ تلقائياً إذا ترك فارغاً" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Description</label>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">الوصف</label>
             <textarea v-model="form.description" rows="3" class="input"></textarea>
           </div>
-          <div class="flex justify-end space-x-3 pt-4">
+          <div class="flex justify-end gap-3 pt-4">
             <button type="button" @click="showModal = false" class="btn btn-secondary">
-              Annuler
+              إلغاء
             </button>
             <button type="submit" class="btn btn-primary">
-              {{ editingCategorie ? 'Enregistrer' : 'Créer' }}
+              {{ editingCategorie ? 'حفظ التعديلات' : 'إضافة التصنيف' }}
             </button>
           </div>
         </form>

@@ -22,7 +22,7 @@ async function loadData() {
     const response = await auteurApi.getAll()
     auteurs.value = response.data
   } catch (error) {
-    console.error('Erreur lors du chargement:', error)
+    console.error('خطأ في التحميل:', error)
   } finally {
     loading.value = false
   }
@@ -73,17 +73,17 @@ async function saveForm() {
     showModal.value = false
     await loadData()
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
+    console.error('خطأ في الحفظ:', error)
   }
 }
 
 async function deleteAuteur(id: number) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cet auteur ?')) {
+  if (confirm('هل أنت متأكد من حذف هذا المؤلف؟')) {
     try {
       await auteurApi.delete(id)
       await loadData()
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
+      console.error('خطأ في الحذف:', error)
     }
   }
 }
@@ -94,9 +94,9 @@ onMounted(loadData)
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-secondary-800">Gestion des auteurs</h2>
+      <h2 class="text-2xl font-bold text-secondary-800">إدارة المؤلفين</h2>
       <button @click="openModal()" class="btn btn-primary">
-        + Ajouter un auteur
+        + إضافة مؤلف
       </button>
     </div>
 
@@ -108,10 +108,10 @@ onMounted(loadData)
       <table class="min-w-full divide-y divide-secondary-200">
         <thead class="bg-secondary-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Auteur</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Nationalité</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Livres</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">المؤلف</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الجنسية</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الكتب</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">الإجراءات</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-secondary-200">
@@ -123,15 +123,20 @@ onMounted(loadData)
               {{ auteur.nationalite || '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
-              {{ auteur.nombreLivres }}
+              {{ auteur.nombreLivres || 0 }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-              <button @click="openModal(auteur)" class="text-primary-600 hover:text-primary-800 mr-3">
-                Modifier
+            <td class="px-6 py-4 whitespace-nowrap text-left text-sm">
+              <button @click="openModal(auteur)" class="text-primary-600 hover:text-primary-800 ml-3">
+                تعديل
               </button>
               <button @click="deleteAuteur(auteur.id)" class="text-red-600 hover:text-red-800">
-                Supprimer
+                حذف
               </button>
+            </td>
+          </tr>
+          <tr v-if="auteurs.length === 0">
+            <td colspan="4" class="px-6 py-12 text-center text-secondary-500">
+              لا يوجد مؤلفون. أضف مؤلفك الأول!
             </td>
           </tr>
         </tbody>
@@ -143,44 +148,44 @@ onMounted(loadData)
       <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
         <div class="p-6 border-b">
           <h3 class="text-lg font-semibold text-secondary-800">
-            {{ editingAuteur ? 'Modifier l\'auteur' : 'Ajouter un auteur' }}
+            {{ editingAuteur ? 'تعديل المؤلف' : 'إضافة مؤلف جديد' }}
           </h3>
         </div>
         <form @submit.prevent="saveForm" class="p-6 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Prénom *</label>
+              <label class="block text-sm font-medium text-secondary-700 mb-1">الاسم الأول *</label>
               <input v-model="form.prenom" type="text" required class="input" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Nom *</label>
+              <label class="block text-sm font-medium text-secondary-700 mb-1">اسم العائلة *</label>
               <input v-model="form.nom" type="text" required class="input" />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Biographie</label>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">السيرة الذاتية</label>
             <textarea v-model="form.biographie" rows="4" class="input"></textarea>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Date de naissance</label>
-              <input v-model="form.dateNaissance" type="date" class="input" />
+              <label class="block text-sm font-medium text-secondary-700 mb-1">تاريخ الميلاد</label>
+              <input v-model="form.dateNaissance" type="date" class="input" dir="ltr" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">Nationalité</label>
-              <input v-model="form.nationalite" type="text" class="input" />
+              <label class="block text-sm font-medium text-secondary-700 mb-1">الجنسية</label>
+              <input v-model="form.nationalite" type="text" class="input" placeholder="مثال: مصر، السعودية" />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Site web</label>
-            <input v-model="form.siteWeb" type="url" class="input" />
+            <label class="block text-sm font-medium text-secondary-700 mb-1">الموقع الإلكتروني</label>
+            <input v-model="form.siteWeb" type="url" class="input" dir="ltr" placeholder="https://" />
           </div>
-          <div class="flex justify-end space-x-3 pt-4">
+          <div class="flex justify-end gap-3 pt-4">
             <button type="button" @click="showModal = false" class="btn btn-secondary">
-              Annuler
+              إلغاء
             </button>
             <button type="submit" class="btn btn-primary">
-              {{ editingAuteur ? 'Enregistrer' : 'Créer' }}
+              {{ editingAuteur ? 'حفظ التعديلات' : 'إضافة المؤلف' }}
             </button>
           </div>
         </form>

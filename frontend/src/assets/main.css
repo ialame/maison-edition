@@ -3,12 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    direction: rtl;
+  }
+
   body {
     @apply font-sans text-secondary-800 bg-white antialiased;
+    font-family: 'Tajawal', 'Noto Naskh Arabic', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+    font-family: 'Noto Naskh Arabic', 'Tajawal', serif;
   }
 }
 
@@ -30,7 +36,7 @@
   }
 
   .input {
-    @apply w-full px-4 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-4 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-right;
   }
 
   .card {
@@ -39,5 +45,36 @@
 
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* RTL specific adjustments */
+  .space-x-4 > * + * {
+    margin-right: 1rem;
+    margin-left: 0;
+  }
+
+  .space-x-2 > * + * {
+    margin-right: 0.5rem;
+    margin-left: 0;
+  }
+
+  .mr-2 {
+    margin-left: 0.5rem;
+    margin-right: 0;
+  }
+
+  .ml-2 {
+    margin-right: 0.5rem;
+    margin-left: 0;
+  }
+
+  .mr-4 {
+    margin-left: 1rem;
+    margin-right: 0;
+  }
+
+  .ml-4 {
+    margin-right: 1rem;
+    margin-left: 0;
   }
 }

@@ -21,8 +21,8 @@ defineProps<{
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       </div>
-      <div v-if="livre.enVedette" class="absolute top-2 right-2 bg-primary-600 text-white text-xs px-2 py-1 rounded">
-        En vedette
+      <div v-if="livre.enVedette" class="absolute top-2 left-2 bg-primary-600 text-white text-xs px-2 py-1 rounded">
+        مميز
       </div>
     </div>
     <div class="p-4">
@@ -30,10 +30,10 @@ defineProps<{
         {{ livre.titre }}
       </h3>
       <p v-if="livre.auteurs?.length" class="text-secondary-500 text-sm mt-1">
-        {{ livre.auteurs.map(a => `${a.prenom} ${a.nom}`).join(', ') }}
+        {{ livre.auteurs.map(a => `${a.prenom} ${a.nom}`).join('، ') }}
       </p>
       <p v-if="livre.prix" class="text-primary-700 font-semibold mt-2">
-        {{ livre.prix.toFixed(2) }} &euro;
+        {{ livre.prix.toFixed(2) }} ر.س
       </p>
     </div>
   </RouterLink>

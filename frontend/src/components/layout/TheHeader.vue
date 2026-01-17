@@ -7,13 +7,13 @@ const authStore = useAuthStore()
 const mobileMenuOpen = ref(false)
 
 const navigation = [
-  { name: 'Accueil', to: '/' },
-  { name: 'Catalogue', to: '/livres' },
-  { name: 'Auteurs', to: '/auteurs' },
-  { name: 'Blog', to: '/blog' },
-  { name: 'Événements', to: '/evenements' },
-  { name: 'À propos', to: '/a-propos' },
-  { name: 'Contact', to: '/contact' }
+  { name: 'الرئيسية', to: '/' },
+  { name: 'الكتب', to: '/livres' },
+  { name: 'المؤلفون', to: '/auteurs' },
+  { name: 'المدونة', to: '/blog' },
+  { name: 'الفعاليات', to: '/evenements' },
+  { name: 'من نحن', to: '/a-propos' },
+  { name: 'اتصل بنا', to: '/contact' }
 ]
 </script>
 
@@ -22,12 +22,12 @@ const navigation = [
     <nav class="container-custom">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
-        <RouterLink to="/" class="flex items-center space-x-2">
-          <span class="text-2xl font-serif font-bold text-primary-800">Maison d'Édition</span>
+        <RouterLink to="/" class="flex items-center gap-2">
+          <span class="text-2xl font-serif font-bold text-primary-800">دار النشر</span>
         </RouterLink>
 
         <!-- Desktop Navigation -->
-        <div class="hidden lg:flex items-center space-x-8">
+        <div class="hidden lg:flex items-center gap-8">
           <RouterLink
             v-for="item in navigation"
             :key="item.name"
@@ -40,25 +40,25 @@ const navigation = [
         </div>
 
         <!-- Auth buttons -->
-        <div class="hidden lg:flex items-center space-x-4">
+        <div class="hidden lg:flex items-center gap-4">
           <template v-if="authStore.isAuthenticated">
             <RouterLink
               v-if="authStore.isEditeur"
               to="/admin"
               class="text-secondary-600 hover:text-primary-700"
             >
-              Administration
+              لوحة التحكم
             </RouterLink>
             <button
               @click="authStore.logout()"
               class="btn btn-outline"
             >
-              Déconnexion
+              تسجيل الخروج
             </button>
           </template>
           <template v-else>
             <RouterLink to="/login" class="btn btn-primary">
-              Connexion
+              تسجيل الدخول
             </RouterLink>
           </template>
         </div>
@@ -95,13 +95,13 @@ const navigation = [
                 class="block px-4 py-2 text-secondary-600 hover:text-primary-700"
                 @click="mobileMenuOpen = false"
               >
-                Administration
+                لوحة التحكم
               </RouterLink>
               <button
                 @click="authStore.logout(); mobileMenuOpen = false"
-                class="w-full text-left px-4 py-2 text-secondary-600 hover:text-primary-700"
+                class="w-full text-right px-4 py-2 text-secondary-600 hover:text-primary-700"
               >
-                Déconnexion
+                تسجيل الخروج
               </button>
             </template>
             <RouterLink
@@ -110,7 +110,7 @@ const navigation = [
               class="block px-4 py-2 text-primary-700 font-medium"
               @click="mobileMenuOpen = false"
             >
-              Connexion
+              تسجيل الدخول
             </RouterLink>
           </div>
         </div>

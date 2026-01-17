@@ -10,21 +10,21 @@ const formattedDate = computed(() => {
   const date = new Date(props.evenement.dateDebut)
   return {
     jour: date.getDate(),
-    mois: date.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase(),
-    heure: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    mois: date.toLocaleDateString('ar-SA', { month: 'short' }),
+    heure: date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
   }
 })
 
 const typeLabel = computed(() => {
   const types: Record<string, string> = {
-    DEDICACE: 'Dédicace',
-    SALON: 'Salon',
-    CONFERENCE: 'Conférence',
-    LECTURE: 'Lecture',
-    ATELIER: 'Atelier',
-    AUTRE: 'Événement'
+    DEDICACE: 'توقيع',
+    SALON: 'معرض',
+    CONFERENCE: 'محاضرة',
+    LECTURE: 'قراءة',
+    ATELIER: 'ورشة عمل',
+    AUTRE: 'فعالية'
   }
-  return types[props.evenement.type] || 'Événement'
+  return types[props.evenement.type] || 'فعالية'
 })
 </script>
 
@@ -47,20 +47,20 @@ const typeLabel = computed(() => {
         </h3>
         <div class="mt-2 text-sm text-secondary-500 space-y-1">
           <p v-if="evenement.lieu || evenement.ville" class="flex items-center">
-            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             {{ evenement.lieu }} {{ evenement.ville ? `- ${evenement.ville}` : '' }}
           </p>
           <p class="flex items-center">
-            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {{ formattedDate.heure }}
           </p>
           <p v-if="evenement.auteurNom" class="flex items-center">
-            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             {{ evenement.auteurNom }}

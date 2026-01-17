@@ -21,7 +21,7 @@ async function handleSubmit() {
     const redirect = route.query.redirect as string || '/'
     router.push(redirect)
   } catch (e: any) {
-    error.value = e.response?.data?.message || 'Erreur de connexion'
+    error.value = e.response?.data?.message || 'خطأ في تسجيل الدخول'
   } finally {
     loading.value = false
   }
@@ -33,9 +33,9 @@ async function handleSubmit() {
     <div class="max-w-md w-full">
       <div class="text-center mb-8">
         <RouterLink to="/" class="text-3xl font-serif font-bold text-primary-800">
-          Maison d'Édition
+          دار النشر
         </RouterLink>
-        <h1 class="mt-6 text-2xl font-semibold text-secondary-800">Connexion</h1>
+        <h1 class="mt-6 text-2xl font-semibold text-secondary-800">تسجيل الدخول</h1>
       </div>
 
       <div class="bg-white rounded-lg shadow-md p-8">
@@ -46,7 +46,7 @@ async function handleSubmit() {
 
           <div>
             <label for="email" class="block text-sm font-medium text-secondary-700 mb-1">
-              Email
+              البريد الإلكتروني
             </label>
             <input
               id="email"
@@ -54,13 +54,13 @@ async function handleSubmit() {
               type="email"
               required
               class="input"
-              placeholder="votre@email.fr"
+              placeholder="example@email.com"
             />
           </div>
 
           <div>
             <label for="password" class="block text-sm font-medium text-secondary-700 mb-1">
-              Mot de passe
+              كلمة المرور
             </label>
             <input
               id="password"
@@ -68,7 +68,7 @@ async function handleSubmit() {
               type="password"
               required
               class="input"
-              placeholder="Votre mot de passe"
+              placeholder="كلمة المرور"
             />
           </div>
 
@@ -77,15 +77,15 @@ async function handleSubmit() {
             :disabled="loading"
             class="w-full btn btn-primary"
           >
-            <span v-if="loading">Connexion...</span>
-            <span v-else>Se connecter</span>
+            <span v-if="loading">جارٍ الدخول...</span>
+            <span v-else>تسجيل الدخول</span>
           </button>
         </form>
       </div>
 
       <p class="mt-8 text-center text-secondary-600">
         <RouterLink to="/" class="text-primary-700 hover:text-primary-800">
-          &larr; Retour à l'accueil
+          العودة للرئيسية &rarr;
         </RouterLink>
       </p>
     </div>

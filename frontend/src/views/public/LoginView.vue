@@ -81,11 +81,18 @@ async function handleSubmit() {
             <span v-else>تسجيل الدخول</span>
           </button>
         </form>
+
+        <div class="mt-6 text-center text-sm text-secondary-600">
+          ليس لديك حساب؟
+          <RouterLink to="/register" class="text-primary-700 hover:text-primary-800 font-medium">
+            إنشاء حساب جديد
+          </RouterLink>
+        </div>
       </div>
 
       <p class="mt-8 text-center text-secondary-600">
         <RouterLink to="/" class="text-primary-700 hover:text-primary-800">
-          العودة للرئيسية &rarr;
+          &rarr; العودة للرئيسية
         </RouterLink>
       </p>
     </div>

@@ -66,6 +66,11 @@ const router = createRouter({
       component: () => import('@/views/public/LoginView.vue')
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/public/RegisterView.vue')
+    },
+    {
       path: '/admin',
       component: () => import('@/views/admin/LayoutAdmin.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },

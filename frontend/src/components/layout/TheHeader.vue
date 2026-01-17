@@ -57,6 +57,9 @@ const navigation = [
             </button>
           </template>
           <template v-else>
+            <RouterLink to="/register" class="text-secondary-600 hover:text-primary-700 font-medium">
+              إنشاء حساب
+            </RouterLink>
             <RouterLink to="/login" class="btn btn-primary">
               تسجيل الدخول
             </RouterLink>
@@ -106,6 +109,13 @@ const navigation = [
             </template>
             <RouterLink
               v-else
+              to="/register"
+              class="block px-4 py-2 text-secondary-600 hover:text-primary-700"
+              @click="mobileMenuOpen = false"
+            >
+              إنشاء حساب
+            </RouterLink>
+            <RouterLink
               to="/login"
               class="block px-4 py-2 text-primary-700 font-medium"
               @click="mobileMenuOpen = false"

@@ -1,160 +1,36 @@
-# ===========================================
-# Security-Critical: Secrets and Credentials
-# ===========================================
+# Backend
+backend/target/
+backend/*.jar
+backend/*.war
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
 
-# Environment files (often contain API keys, DB passwords, secrets)
-.env
-.env.*
-.env.local
-.env.*.local
-!.env.example
-!.env.template
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 
-# Private keys and certificates
-*.pem
-*.key
-*.p12
-*.pfx
-*.crt
-*.cer
-id_rsa
-id_dsa
-id_ecdsa
-id_ed25519
-*.ppk
-
-# AWS credentials
-.aws/
-aws.json
-credentials.csv
-
-# Google Cloud credentials
-*.json.enc
-*-credentials.json
-*-service-account.json
-service-account*.json
-gcloud/
-
-# Azure credentials
-azure.json
-.azure/
-
-# Docker secrets
-docker-compose.override.yml
-.docker/
-
-# Terraform state (may contain secrets)
-*.tfstate
-*.tfstate.*
-.terraform/
-
-# Ansible vault files
-*.vault
-vault.yml
-vault.yaml
-
-# SSH configuration
-.ssh/
-
-# GPG keys
-*.gpg
-*.asc
-secring.*
-
-# Keystore files
-*.jks
-*.keystore
-
-# ===========================================
-# Configuration files that may contain secrets
-# ===========================================
-config/secrets.yml
-config/secrets.yaml
-config/credentials.yml
-config/credentials.yaml
-secrets.json
-secrets.yml
-secrets.yaml
-credentials.json
-credentials.yml
-credentials.yaml
-config.local.*
-*.secret
-*.secrets
-
-# Database files
-*.sql
-*.sqlite
-*.sqlite3
-*.db
-
-# ===========================================
-# IDE and Editor files
-# ===========================================
+# IDE
 .idea/
+*.iml
 .vscode/
 *.swp
 *.swo
-*~
-.project
-.classpath
-.settings/
-*.sublime-*
-
-# ===========================================
-# OS-generated files
-# ===========================================
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-desktop.ini
 
-# ===========================================
-# Dependency directories
-# ===========================================
-node_modules/
-vendor/
-bower_components/
-jspm_packages/
-__pycache__/
-*.pyc
-.Python
-venv/
-.venv/
-ENV/
-env/
-
-# ===========================================
-# Build outputs and logs
-# ===========================================
-dist/
-build/
-out/
-target/
+# Logs
 *.log
 logs/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# ===========================================
-# Test and coverage
-# ===========================================
-coverage/
-.coverage
-.nyc_output/
-htmlcov/
+# Environment
+.env
+.env.local
+.env.*.local
 
-# ===========================================
-# Temporary files
-# ===========================================
-tmp/
-temp/
-*.tmp
-*.temp
-*.bak
-*.backup
+# Build
+build/
+out/
+
+# Uploads
+uploads/

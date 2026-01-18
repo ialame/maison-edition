@@ -14,7 +14,7 @@ onMounted(async () => {
     const response = await livreApi.getById(id)
     livre.value = response.data
   } catch (error) {
-    console.error('Erreur lors du chargement du livre:', error)
+    console.error('خطأ في تحميل الكتاب:', error)
   } finally {
     loading.value = false
   }
@@ -34,7 +34,7 @@ onMounted(async () => {
           <div class="aspect-[2/3] bg-secondary-100 rounded-lg overflow-hidden shadow-lg">
             <img
               v-if="livre.couverture"
-              :src="livre.couverture"
+              :src="`/uploads/${livre.couverture}`"
               :alt="livre.titre"
               class="w-full h-full object-cover"
             />
@@ -49,7 +49,7 @@ onMounted(async () => {
         <!-- Details -->
         <div class="lg:col-span-2">
           <nav class="text-sm text-secondary-500 mb-4">
-            <RouterLink to="/livres" class="hover:text-primary-700">Catalogue</RouterLink>
+            <RouterLink to="/livres" class="hover:text-primary-700">الكتب</RouterLink>
             <span class="mx-2">/</span>
             <span>{{ livre.titre }}</span>
           </nav>
@@ -59,7 +59,7 @@ onMounted(async () => {
           </h1>
 
           <div v-if="livre.auteurs?.length" class="mb-6">
-            <span class="text-secondary-600">Par </span>
+            <span class="text-secondary-600">تأليف: </span>
             <template v-for="(auteur, index) in livre.auteurs" :key="auteur.id">
               <RouterLink
                 :to="`/auteurs/${auteur.id}`"
@@ -67,12 +67,12 @@ onMounted(async () => {
               >
                 {{ auteur.prenom }} {{ auteur.nom }}
               </RouterLink>
-              <span v-if="index < livre.auteurs.length - 1">, </span>
+              <span v-if="index < livre.auteurs.length - 1">، </span>
             </template>
           </div>
 
           <div v-if="livre.prix" class="text-3xl font-bold text-primary-700 mb-6">
-            {{ livre.prix.toFixed(2) }} &euro;
+            {{ livre.prix.toFixed(2) }} ر.س
           </div>
 
           <div class="prose prose-lg max-w-none mb-8">
@@ -81,30 +81,30 @@ onMounted(async () => {
 
           <!-- Metadata -->
           <div class="bg-secondary-50 rounded-lg p-6 mb-8">
-            <h3 class="font-semibold text-secondary-800 mb-4">Informations</h3>
+            <h3 class="font-semibold text-secondary-800 mb-4">معلومات الكتاب</h3>
             <dl class="grid grid-cols-2 gap-4 text-sm">
               <div v-if="livre.isbn">
-                <dt class="text-secondary-500">ISBN</dt>
-                <dd class="text-secondary-800">{{ livre.isbn }}</dd>
+                <dt class="text-secondary-500">رقم ISBN</dt>
+                <dd class="text-secondary-800" dir="ltr">{{ livre.isbn }}</dd>
               </div>
               <div v-if="livre.nombrePages">
-                <dt class="text-secondary-500">Pages</dt>
+                <dt class="text-secondary-500">عدد الصفحات</dt>
                 <dd class="text-secondary-800">{{ livre.nombrePages }}</dd>
               </div>
               <div v-if="livre.datePublication">
-                <dt class="text-secondary-500">Date de publication</dt>
-                <dd class="text-secondary-800">{{ new Date(livre.datePublication).toLocaleDateString('fr-FR') }}</dd>
+                <dt class="text-secondary-500">تاريخ النشر</dt>
+                <dd class="text-secondary-800">{{ new Date(livre.datePublication).toLocaleDateString('ar-SA') }}</dd>
               </div>
               <div v-if="livre.langue">
-                <dt class="text-secondary-500">Langue</dt>
+                <dt class="text-secondary-500">اللغة</dt>
                 <dd class="text-secondary-800">{{ livre.langue }}</dd>
               </div>
               <div v-if="livre.format">
-                <dt class="text-secondary-500">Format</dt>
+                <dt class="text-secondary-500">الشكل</dt>
                 <dd class="text-secondary-800">{{ livre.format }}</dd>
               </div>
               <div v-if="livre.categorie">
-                <dt class="text-secondary-500">Catégorie</dt>
+                <dt class="text-secondary-500">التصنيف</dt>
                 <dd class="text-secondary-800">{{ livre.categorie.nom }}</dd>
               </div>
             </dl>
@@ -112,7 +112,7 @@ onMounted(async () => {
 
           <!-- Résumé -->
           <div v-if="livre.resume" class="mb-8">
-            <h3 class="font-semibold text-secondary-800 mb-4">Résumé</h3>
+            <h3 class="font-semibold text-secondary-800 mb-4">ملخص الكتاب</h3>
             <div class="prose max-w-none text-secondary-600">
               <p>{{ livre.resume }}</p>
             </div>
@@ -121,19 +121,19 @@ onMounted(async () => {
           <!-- Actions -->
           <div class="flex flex-wrap gap-4">
             <button class="btn btn-primary" :disabled="!livre.disponible">
-              {{ livre.disponible ? 'Commander' : 'Indisponible' }}
+              {{ livre.disponible ? 'اطلب الآن' : 'غير متوفر' }}
             </button>
             <RouterLink to="/livres" class="btn btn-secondary">
-              Retour au catalogue
+              العودة للكتب
             </RouterLink>
           </div>
         </div>
       </div>
 
       <div v-else class="text-center py-12">
-        <p class="text-secondary-500">Livre non trouvé.</p>
+        <p class="text-secondary-500">الكتاب غير موجود.</p>
         <RouterLink to="/livres" class="text-primary-700 hover:text-primary-800 mt-4 inline-block">
-          Retour au catalogue
+          العودة للكتب
         </RouterLink>
       </div>
     </div>

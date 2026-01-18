@@ -12,7 +12,7 @@ defineProps<{
     <div class="aspect-[2/3] bg-secondary-100 relative overflow-hidden">
       <img
         v-if="livre.couverture"
-        :src="livre.couverture"
+        :src="`/uploads/${livre.couverture}`"
         :alt="livre.titre"
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />

@@ -146,6 +146,18 @@ export const articleApi = {
     api.delete(`/articles/${id}`)
 }
 
+export const uploadApi = {
+  upload: (file: File, type: 'livres' | 'auteurs' | 'articles' | 'evenements') => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<{ path: string; url: string }>(`/upload/${type}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  delete: (path: string) =>
+    api.delete('/upload', { params: { path } })
+}
+
 export const evenementApi = {
   getAll: () =>
     api.get<Evenement[]>('/evenements'),

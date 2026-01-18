@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { livreApi, auteurApi, categorieApi } from '@/services/api'
+import { livreApi, auteurApi, categorieApi, uploadApi } from '@/services/api'
 import type { Livre, Auteur, Categorie } from '@/types'
 
 const livres = ref<Livre[]>([])
@@ -9,12 +9,15 @@ const categories = ref<Categorie[]>([])
 const loading = ref(true)
 const showModal = ref(false)
 const editingLivre = ref<Livre | null>(null)
+const uploading = ref(false)
+const imagePreview = ref<string | null>(null)
 
 const form = ref({
   titre: '',
   isbn: '',
   description: '',
   resume: '',
+  couverture: '',
   prix: 0,
   nombrePages: 0,
   datePublication: '',
@@ -51,6 +54,7 @@ function openModal(livre?: Livre) {
       isbn: livre.isbn || '',
       description: livre.description || '',
       resume: livre.resume || '',
+      couverture: livre.couverture || '',
       prix: livre.prix || 0,
       nombrePages: livre.nombrePages || 0,
       datePublication: livre.datePublication || '',
@@ -61,6 +65,7 @@ function openModal(livre?: Livre) {
       auteurIds: livre.auteurs?.map(a => a.id) || [],
       categorieId: livre.categorie?.id || null
     }
+    imagePreview.value = livre.couverture ? `/uploads/${livre.couverture}` : null
   } else {
     editingLivre.value = null
     form.value = {
@@ -68,6 +73,7 @@ function openModal(livre?: Livre) {
       isbn: '',
       description: '',
       resume: '',
+      couverture: '',
       prix: 0,
       nombrePages: 0,
       datePublication: '',
@@ -78,8 +84,41 @@ function openModal(livre?: Livre) {
       auteurIds: [],
       categorieId: null
     }
+    imagePreview.value = null
   }
   showModal.value = true
+}
+
+async function handleImageUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+
+  // Prévisualiser l'image
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+
+  // Uploader l'image
+  uploading.value = true
+  try {
+    const response = await uploadApi.upload(file, 'livres')
+    form.value.couverture = response.data.path
+  } catch (error) {
+    console.error('خطأ في رفع الصورة:', error)
+    alert('حدث خطأ أثناء رفع الصورة')
+    imagePreview.value = null
+  } finally {
+    uploading.value = false
+  }
+}
+
+function removeImage() {
+  form.value.couverture = ''
+  imagePreview.value = null
 }
 
 async function saveForm() {
@@ -89,6 +128,7 @@ async function saveForm() {
       isbn: form.value.isbn || null,
       description: form.value.description || null,
       resume: form.value.resume || null,
+      couverture: form.value.couverture || null,
       prix: form.value.prix || null,
       nombrePages: form.value.nombrePages || null,
       datePublication: form.value.datePublication || null,
@@ -142,6 +182,7 @@ onMounted(loadData)
       <table class="min-w-full divide-y divide-secondary-200">
         <thead class="bg-secondary-50">
           <tr>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الغلاف</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">العنوان</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">المؤلف</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">التصنيف</th>
@@ -152,6 +193,19 @@ onMounted(loadData)
         </thead>
         <tbody class="bg-white divide-y divide-secondary-200">
           <tr v-for="livre in livres" :key="livre.id">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <img
+                v-if="livre.couverture"
+                :src="`/uploads/${livre.couverture}`"
+                :alt="livre.titre"
+                class="w-12 h-16 object-cover rounded shadow"
+              />
+              <div v-else class="w-12 h-16 bg-secondary-200 rounded flex items-center justify-center">
+                <svg class="w-6 h-6 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="font-medium text-secondary-800">{{ livre.titre }}</div>
               <div class="text-sm text-secondary-500" dir="ltr">{{ livre.isbn }}</div>
@@ -183,7 +237,7 @@ onMounted(loadData)
             </td>
           </tr>
           <tr v-if="livres.length === 0">
-            <td colspan="6" class="px-6 py-12 text-center text-secondary-500">
+            <td colspan="7" class="px-6 py-12 text-center text-secondary-500">
               لا توجد كتب. أضف كتابك الأول!
             </td>
           </tr>
@@ -200,6 +254,59 @@ onMounted(loadData)
           </h3>
         </div>
         <form @submit.prevent="saveForm" class="p-6 space-y-4">
+          <!-- صورة الغلاف -->
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-2">صورة الغلاف</label>
+            <div class="flex items-start gap-4">
+              <div class="relative">
+                <div
+                  v-if="imagePreview"
+                  class="w-32 h-44 rounded-lg overflow-hidden shadow-md"
+                >
+                  <img :src="imagePreview" alt="معاينة الغلاف" class="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    @click="removeImage"
+                    class="absolute top-1 left-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div
+                  v-else
+                  class="w-32 h-44 border-2 border-dashed border-secondary-300 rounded-lg flex items-center justify-center"
+                >
+                  <svg class="w-12 h-12 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <label
+                  class="block w-full cursor-pointer"
+                  :class="uploading ? 'pointer-events-none opacity-50' : ''"
+                >
+                  <span class="btn btn-secondary inline-block">
+                    {{ uploading ? 'جارٍ الرفع...' : 'اختيار صورة' }}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    @change="handleImageUpload"
+                    :disabled="uploading"
+                  />
+                </label>
+                <p class="text-xs text-secondary-500 mt-2">
+                  يُفضل أن تكون الصورة بحجم 400×600 بكسل<br/>
+                  الحد الأقصى: 10 ميجابايت
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label class="block text-sm font-medium text-secondary-700 mb-1">العنوان *</label>
             <input v-model="form.titre" type="text" required class="input" />
@@ -282,7 +389,7 @@ onMounted(loadData)
             <button type="button" @click="showModal = false" class="btn btn-secondary">
               إلغاء
             </button>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary" :disabled="uploading">
               {{ editingLivre ? 'حفظ التعديلات' : 'إضافة الكتاب' }}
             </button>
           </div>

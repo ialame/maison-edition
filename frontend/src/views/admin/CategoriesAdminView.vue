@@ -46,10 +46,10 @@ function openModal(categorie?: Categorie) {
 
 async function saveForm() {
   try {
-    const data = {
+    const data: Partial<Categorie> = {
       nom: form.value.nom,
-      description: form.value.description || null,
-      slug: form.value.slug || null
+      description: form.value.description || undefined,
+      slug: form.value.slug || undefined
     }
 
     if (editingCategorie.value) {

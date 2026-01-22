@@ -18,7 +18,7 @@ const form = ref({
   lieu: '',
   adresse: '',
   ville: '',
-  type: 'AUTRE' as string,
+  type: 'AUTRE' as Evenement['type'],
   actif: true,
   livreId: null as number | null,
   auteurId: null as number | null
@@ -91,14 +91,14 @@ function openModal(evenement?: Evenement) {
 
 async function saveForm() {
   try {
-    const data = {
+    const data: Partial<Evenement> = {
       titre: form.value.titre,
-      description: form.value.description || null,
+      description: form.value.description || undefined,
       dateDebut: form.value.dateDebut,
-      dateFin: form.value.dateFin || null,
-      lieu: form.value.lieu || null,
-      adresse: form.value.adresse || null,
-      ville: form.value.ville || null,
+      dateFin: form.value.dateFin || undefined,
+      lieu: form.value.lieu || undefined,
+      adresse: form.value.adresse || undefined,
+      ville: form.value.ville || undefined,
       type: form.value.type,
       actif: form.value.actif
     }

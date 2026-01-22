@@ -1,0 +1,31 @@
+[Unit]
+Description=Maison Edition - dar-adloun.com Backend
+After=syslog.target network.target mariadb.service
+
+[Service]
+Type=simple
+User=maison
+Group=maison
+WorkingDirectory=/opt/maison-edition/backend
+
+# Variables d'environnement
+Environment="JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64"
+Environment="SPRING_PROFILES_ACTIVE=production"
+
+# Commande de démarrage
+ExecStart=/usr/bin/java -jar -Xms256m -Xmx512m /opt/maison-edition/backend/maison-edition.jar
+
+# Redémarrage automatique
+Restart=always
+RestartSec=10
+
+# Logs
+StandardOutput=append:/var/log/maison-edition/app.log
+StandardError=append:/var/log/maison-edition/error.log
+
+# Sécurité
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

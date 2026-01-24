@@ -35,7 +35,7 @@ public class ChapitreService {
     }
 
     public Chapitre findByLivreIdAndNumero(Long livreId, Integer numero) {
-        return chapitreRepository.findByLivreIdAndNumero(livreId, numero)
+        return chapitreRepository.findByLivreIdAndNumeroWithLivre(livreId, numero)
                 .orElseThrow(() -> new RuntimeException("الفصل غير موجود"));
     }
 

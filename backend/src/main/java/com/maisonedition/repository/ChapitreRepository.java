@@ -20,6 +20,9 @@ public interface ChapitreRepository extends JpaRepository<Chapitre, Long> {
 
     Optional<Chapitre> findByLivreIdAndNumero(Long livreId, Integer numero);
 
+    @Query("SELECT c FROM Chapitre c JOIN FETCH c.livre WHERE c.livre.id = :livreId AND c.numero = :numero")
+    Optional<Chapitre> findByLivreIdAndNumeroWithLivre(@Param("livreId") Long livreId, @Param("numero") Integer numero);
+
     @Query("SELECT MAX(c.numero) FROM Chapitre c WHERE c.livre.id = :livreId")
     Integer findMaxNumeroByLivreId(@Param("livreId") Long livreId);
 

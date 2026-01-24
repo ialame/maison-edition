@@ -24,6 +24,7 @@ export interface Chapitre {
   numero: number
   gratuit: boolean
   publie: boolean
+  pdfPath: string | null
   livreId: number
   dateCreation: string
   dateModification: string
@@ -42,6 +43,7 @@ export interface ChapitreDetail {
   contenu: string
   numero: number
   gratuit: boolean
+  pdfPath: string | null
   livreId: number
   livreTitre: string
 }

@@ -15,6 +15,7 @@ public class ChapitreDetailDTO {
     private String contenu;
     private Integer numero;
     private Boolean gratuit;
+    private String pdfPath;
     private Long livreId;
     private String livreTitre;
 }

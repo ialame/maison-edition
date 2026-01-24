@@ -31,6 +31,9 @@ public class Chapitre {
     @Column(nullable = false)
     private Boolean publie = true;
 
+    @Column
+    private String pdfPath;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livre_id", nullable = false)
     private Livre livre;

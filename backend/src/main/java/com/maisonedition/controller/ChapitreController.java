@@ -6,11 +6,24 @@ import com.maisonedition.dto.ChapitreListDTO;
 import com.maisonedition.entity.Chapitre;
 import com.maisonedition.service.ChapitreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -19,6 +32,9 @@ import java.util.stream.Collectors;
 public class ChapitreController {
 
     private final ChapitreService chapitreService;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     // ===== PUBLIC ENDPOINTS =====
 
@@ -52,6 +68,38 @@ public class ChapitreController {
         }
 
         return ResponseEntity.ok(toDetailDTO(chapitre));
+    }
+
+    @GetMapping("/livres/{livreId}/chapitres/{numero}/pdf")
+    public ResponseEntity<Resource> getChapitrePdf(
+            @PathVariable Long livreId,
+            @PathVariable Integer numero) {
+        Chapitre chapitre = chapitreService.findByLivreIdAndNumero(livreId, numero);
+
+        // Si le chapitre n'est pas gratuit, on refuse l'accès
+        if (!chapitre.getGratuit()) {
+            return ResponseEntity.status(403).build();
+        }
+
+        if (chapitre.getPdfPath() == null || chapitre.getPdfPath().isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            Path filePath = Paths.get(uploadDir).resolve(chapitre.getPdfPath()).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + chapitre.getTitre() + ".pdf\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     // ===== ADMIN ENDPOINTS =====
@@ -93,6 +141,64 @@ public class ChapitreController {
         return ResponseEntity.ok(toDTO(updated));
     }
 
+    @PostMapping("/admin/chapitres/{id}/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITEUR')")
+    public ResponseEntity<ChapitreDTO> uploadChapitrePdf(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.equals("application/pdf")) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            // Create pdfs subdirectory
+            Path pdfDir = Paths.get(uploadDir, "pdfs");
+            Files.createDirectories(pdfDir);
+
+            // Generate unique filename
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    : ".pdf";
+            String filename = UUID.randomUUID().toString() + extension;
+
+            // Save file
+            Path targetPath = pdfDir.resolve(filename);
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Update chapter with PDF path
+            Chapitre updated = chapitreService.updatePdfPath(id, "pdfs/" + filename);
+            return ResponseEntity.ok(toDTO(updated));
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/admin/chapitres/{id}/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITEUR')")
+    public ResponseEntity<ChapitreDTO> deleteChapitrePdf(@PathVariable Long id) {
+        Chapitre chapitre = chapitreService.findById(id);
+
+        if (chapitre.getPdfPath() != null && !chapitre.getPdfPath().isEmpty()) {
+            try {
+                Path filePath = Paths.get(uploadDir).resolve(chapitre.getPdfPath()).normalize();
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                // Log error but continue to clear the path
+            }
+        }
+
+        Chapitre updated = chapitreService.updatePdfPath(id, null);
+        return ResponseEntity.ok(toDTO(updated));
+    }
+
     @DeleteMapping("/admin/chapitres/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITEUR')")
     public ResponseEntity<Void> deleteChapitre(@PathVariable Long id) {
@@ -119,6 +225,7 @@ public class ChapitreController {
                 .numero(chapitre.getNumero())
                 .gratuit(chapitre.getGratuit())
                 .publie(chapitre.getPublie())
+                .pdfPath(chapitre.getPdfPath())
                 .livreId(chapitre.getLivre().getId())
                 .dateCreation(chapitre.getDateCreation())
                 .dateModification(chapitre.getDateModification())
@@ -141,6 +248,7 @@ public class ChapitreController {
                 .contenu(chapitre.getContenu())
                 .numero(chapitre.getNumero())
                 .gratuit(chapitre.getGratuit())
+                .pdfPath(chapitre.getPdfPath())
                 .livreId(chapitre.getLivre().getId())
                 .livreTitre(chapitre.getLivre().getTitre())
                 .build();

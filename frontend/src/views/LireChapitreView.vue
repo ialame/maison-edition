@@ -18,6 +18,13 @@ const fontSize = ref(20)
 const livreId = computed(() => Number(route.params.livreId))
 const numero = computed(() => Number(route.params.numero))
 
+const pdfUrl = computed(() => {
+  if (chapitre.value?.pdfPath) {
+    return chapitreApi.getPdfUrl(livreId.value, numero.value)
+  }
+  return null
+})
+
 const previousChapitre = computed(() => {
   const currentIndex = chapitres.value.findIndex(c => c.numero === numero.value)
   if (currentIndex > 0) {
@@ -106,26 +113,28 @@ onMounted(loadData)
 
           <!-- Controls -->
           <div class="flex items-center gap-2">
-            <!-- Font size controls -->
-            <button
-              @click="decreaseFontSize"
-              class="p-2 rounded-lg text-secondary-600 hover:bg-amber-100 transition-colors"
-              title="تصغير الخط"
-            >
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-              </svg>
-            </button>
-            <span class="text-sm text-secondary-500 w-8 text-center">{{ fontSize }}</span>
-            <button
-              @click="increaseFontSize"
-              class="p-2 rounded-lg text-secondary-600 hover:bg-amber-100 transition-colors"
-              title="تكبير الخط"
-            >
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
+            <!-- Font size controls (only for text content) -->
+            <template v-if="chapitre && !chapitre.pdfPath">
+              <button
+                @click="decreaseFontSize"
+                class="p-2 rounded-lg text-secondary-600 hover:bg-amber-100 transition-colors"
+                title="تصغير الخط"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                </svg>
+              </button>
+              <span class="text-sm text-secondary-500 w-8 text-center">{{ fontSize }}</span>
+              <button
+                @click="increaseFontSize"
+                class="p-2 rounded-lg text-secondary-600 hover:bg-amber-100 transition-colors"
+                title="تكبير الخط"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </template>
 
             <!-- Table of contents toggle -->
             <button
@@ -229,7 +238,7 @@ onMounted(loadData)
       </div>
 
       <!-- Chapter Content -->
-      <article v-else-if="chapitre" class="max-w-3xl mx-auto">
+      <article v-else-if="chapitre" class="max-w-4xl mx-auto">
         <!-- Chapter Header -->
         <header class="text-center mb-12 pb-12 border-b-2 border-amber-200">
           <p class="text-primary-600 font-medium mb-2">الفصل {{ chapitre.numero }}</p>
@@ -246,8 +255,25 @@ onMounted(loadData)
           </div>
         </header>
 
-        <!-- Chapter Body -->
+        <!-- PDF Viewer -->
+        <div v-if="pdfUrl" class="mb-12">
+          <div class="bg-secondary-100 rounded-xl overflow-hidden shadow-lg">
+            <iframe
+              :src="pdfUrl"
+              class="w-full"
+              style="height: 80vh; min-height: 600px;"
+              frameborder="0"
+            ></iframe>
+          </div>
+          <p class="text-center text-secondary-500 mt-4 text-sm">
+            إذا لم يظهر الملف،
+            <a :href="pdfUrl" target="_blank" class="text-primary-600 hover:underline">اضغط هنا لتحميله</a>
+          </p>
+        </div>
+
+        <!-- Text Content (HTML from TipTap) -->
         <div
+          v-else
           class="prose prose-lg prose-amber max-w-none reading-content font-serif leading-loose"
           :style="{ fontSize: `${fontSize}px` }"
           v-html="chapitre.contenu"

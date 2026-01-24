@@ -18,6 +18,7 @@ public class ChapitreDTO {
     private Integer numero;
     private Boolean gratuit;
     private Boolean publie;
+    private String pdfPath;
     private Long livreId;
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;

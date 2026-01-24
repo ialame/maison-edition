@@ -89,4 +89,11 @@ public class ChapitreService {
     public long countByLivreId(Long livreId) {
         return chapitreRepository.countByLivreId(livreId);
     }
+
+    @Transactional
+    public Chapitre updatePdfPath(Long id, String pdfPath) {
+        Chapitre chapitre = findById(id);
+        chapitre.setPdfPath(pdfPath);
+        return chapitreRepository.save(chapitre);
+    }
 }

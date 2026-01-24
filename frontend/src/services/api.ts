@@ -186,7 +186,21 @@ export const chapitreApi = {
     api.delete(`/admin/chapitres/${id}`),
 
   reorder: (livreId: number, chapitreIds: number[]) =>
-    api.put(`/admin/livres/${livreId}/chapitres/reorder`, chapitreIds)
+    api.put(`/admin/livres/${livreId}/chapitres/reorder`, chapitreIds),
+
+  uploadPdf: (chapitreId: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<Chapitre>(`/admin/chapitres/${chapitreId}/pdf`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  deletePdf: (chapitreId: number) =>
+    api.delete<Chapitre>(`/admin/chapitres/${chapitreId}/pdf`),
+
+  getPdfUrl: (livreId: number, numero: number) =>
+    `/api/livres/${livreId}/chapitres/${numero}/pdf`
 }
 
 export const evenementApi = {

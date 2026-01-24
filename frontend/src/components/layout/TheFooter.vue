@@ -10,7 +10,7 @@ const currentYear = new Date().getFullYear()
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- About -->
         <div class="col-span-1 md:col-span-2">
-          <img src="/assets/dar-adloun-logo-light.svg" alt="دار عدلون" class="h-12 mb-4" />
+          <img src="/assets/dar-adloun-logo-light.svg" alt="دار عدلون" class="h-20 mb-4" />
           <p class="text-secondary-300 mb-4">
             دار عدلون للنشر والتوزيع - نقدم لكم أفضل الكتب والإصدارات
             في مختلف المجالات الأدبية والعلمية والثقافية.

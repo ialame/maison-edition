@@ -23,7 +23,7 @@ const navigation = [
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <RouterLink to="/" class="flex items-center gap-2">
-          <img src="/assets/dar-adloun-logo-dark.svg" alt="دار عدلون" class="h-10" />
+          <img src="/assets/dar-adloun-logo-dark.svg" alt="دار عدلون" class="h-16" />
         </RouterLink>
 
         <!-- Desktop Navigation -->

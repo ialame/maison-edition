@@ -14,6 +14,36 @@ export interface Livre {
   enVedette: boolean
   auteurs: Auteur[]
   categorie: Categorie | null
+  chapitres?: ChapitreList[]
+}
+
+export interface Chapitre {
+  id: number
+  titre: string
+  contenu: string
+  numero: number
+  gratuit: boolean
+  publie: boolean
+  livreId: number
+  dateCreation: string
+  dateModification: string
+}
+
+export interface ChapitreList {
+  id: number
+  titre: string
+  numero: number
+  gratuit: boolean
+}
+
+export interface ChapitreDetail {
+  id: number
+  titre: string
+  contenu: string
+  numero: number
+  gratuit: boolean
+  livreId: number
+  livreTitre: string
 }
 
 export interface Auteur {

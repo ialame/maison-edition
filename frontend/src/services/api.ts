@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page } from '@/types'
+import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -156,6 +156,37 @@ export const uploadApi = {
   },
   delete: (path: string) =>
     api.delete('/upload', { params: { path } })
+}
+
+export const chapitreApi = {
+  // Public endpoints
+  getByLivre: (livreId: number) =>
+    api.get<ChapitreList[]>(`/livres/${livreId}/chapitres`),
+
+  getGratuits: (livreId: number) =>
+    api.get<ChapitreList[]>(`/livres/${livreId}/chapitres/gratuits`),
+
+  getByNumero: (livreId: number, numero: number) =>
+    api.get<ChapitreDetail>(`/livres/${livreId}/chapitres/${numero}`),
+
+  // Admin endpoints
+  getAllAdmin: (livreId: number) =>
+    api.get<Chapitre[]>(`/admin/livres/${livreId}/chapitres`),
+
+  getById: (id: number) =>
+    api.get<Chapitre>(`/admin/chapitres/${id}`),
+
+  create: (livreId: number, chapitre: Partial<Chapitre>) =>
+    api.post<Chapitre>(`/admin/livres/${livreId}/chapitres`, chapitre),
+
+  update: (id: number, chapitre: Partial<Chapitre>) =>
+    api.put<Chapitre>(`/admin/chapitres/${id}`, chapitre),
+
+  delete: (id: number) =>
+    api.delete(`/admin/chapitres/${id}`),
+
+  reorder: (livreId: number, chapitreIds: number[]) =>
+    api.put(`/admin/livres/${livreId}/chapitres/reorder`, chapitreIds)
 }
 
 export const evenementApi = {

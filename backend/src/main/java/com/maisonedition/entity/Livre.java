@@ -66,6 +66,10 @@ public class Livre {
     @JoinColumn(name = "categorie_id")
     private Categorie categorie;
 
+    @OneToMany(mappedBy = "livre", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Chapitre> chapitres = new ArrayList<>();
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateCreation;
 

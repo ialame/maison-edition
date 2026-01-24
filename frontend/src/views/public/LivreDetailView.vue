@@ -1,18 +1,23 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { livreApi } from '@/services/api'
-import type { Livre } from '@/types'
+import { livreApi, chapitreApi } from '@/services/api'
+import type { Livre, ChapitreList } from '@/types'
 
 const route = useRoute()
 const livre = ref<Livre | null>(null)
+const chapitres = ref<ChapitreList[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
     const id = Number(route.params.id)
-    const response = await livreApi.getById(id)
-    livre.value = response.data
+    const [livreRes, chapitresRes] = await Promise.all([
+      livreApi.getById(id),
+      chapitreApi.getByLivre(id)
+    ])
+    livre.value = livreRes.data
+    chapitres.value = chapitresRes.data
   } catch (error) {
     console.error('خطأ في تحميل الكتاب:', error)
   } finally {
@@ -118,12 +123,77 @@ onMounted(async () => {
             </div>
           </div>
 
+          <!-- Chapters -->
+          <div v-if="chapitres.length > 0" class="mb-8">
+            <h3 class="font-semibold text-secondary-800 mb-4 flex items-center">
+              <svg class="w-5 h-5 ml-2 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              فهرس الفصول
+            </h3>
+            <div class="bg-gradient-to-l from-amber-50 to-white rounded-xl border border-amber-200 overflow-hidden">
+              <div
+                v-for="chapitre in chapitres"
+                :key="chapitre.id"
+                class="border-b border-amber-100 last:border-b-0"
+              >
+                <RouterLink
+                  v-if="chapitre.gratuit"
+                  :to="`/livres/${livre.id}/lire/${chapitre.numero}`"
+                  class="flex items-center justify-between p-4 hover:bg-amber-50 transition-colors group"
+                >
+                  <div class="flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold ml-3">
+                      {{ chapitre.numero }}
+                    </span>
+                    <span class="font-serif text-secondary-800 group-hover:text-primary-700 transition-colors">
+                      {{ chapitre.titre }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">مجاني</span>
+                    <svg class="w-5 h-5 text-secondary-400 group-hover:text-primary-600 group-hover:-translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </div>
+                </RouterLink>
+                <div v-else class="flex items-center justify-between p-4 opacity-60">
+                  <div class="flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-secondary-100 text-secondary-500 flex items-center justify-center text-sm font-bold ml-3">
+                      {{ chapitre.numero }}
+                    </span>
+                    <span class="font-serif text-secondary-600">{{ chapitre.titre }}</span>
+                  </div>
+                  <span class="text-xs bg-secondary-100 text-secondary-500 px-2 py-1 rounded-full">
+                    <svg class="w-3 h-3 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    مدفوع
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p class="text-sm text-secondary-500 mt-3 text-center">
+              اقرأ الفصول المجانية واشترِ الكتاب للوصول الكامل
+            </p>
+          </div>
+
           <!-- Actions -->
           <div class="flex flex-wrap gap-4">
             <button class="btn btn-primary" :disabled="!livre.disponible">
               {{ livre.disponible ? 'اطلب الآن' : 'غير متوفر' }}
             </button>
-            <RouterLink to="/livres" class="btn btn-secondary">
+            <RouterLink
+              v-if="chapitres.some(c => c.gratuit)"
+              :to="`/livres/${livre.id}/lire/${chapitres.find(c => c.gratuit)?.numero}`"
+              class="btn btn-secondary"
+            >
+              <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              ابدأ القراءة
+            </RouterLink>
+            <RouterLink to="/livres" class="btn btn-outline">
               العودة للكتب
             </RouterLink>
           </div>

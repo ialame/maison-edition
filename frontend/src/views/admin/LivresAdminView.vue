@@ -232,6 +232,9 @@ onMounted(loadData)
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-left text-sm">
+              <RouterLink :to="`/admin/livres/${livre.id}/chapitres`" class="text-amber-600 hover:text-amber-800 ml-3">
+                الفصول
+              </RouterLink>
               <button @click="openModal(livre)" class="text-primary-600 hover:text-primary-800 ml-3">
                 تعديل
               </button>

@@ -40,10 +40,10 @@ onMounted(async () => {
       <div class="container-custom">
         <div class="max-w-3xl">
           <h1 class="text-4xl md:text-5xl font-serif font-bold mb-6">
-            مرحبًا بكم في دار الأدلون
+            مرحبًا بكم في دار عدلون
           </h1>
           <p class="text-xl text-primary-100 mb-8">
-            دار الأدلون للنشر والتوزيع - اكتشفوا مجموعتنا المختارة بعناية من الكتب
+            دار عدلون للنشر والتوزيع - اكتشفوا مجموعتنا المختارة بعناية من الكتب
             والإصدارات في مختلف المجالات الأدبية والعلمية.
           </p>
           <div class="flex flex-wrap gap-4">

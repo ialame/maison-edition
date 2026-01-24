@@ -42,7 +42,7 @@ function isActive(to: string) {
     >
       <div class="flex items-center justify-between h-16 px-6 border-b border-secondary-800">
         <RouterLink to="/" class="flex items-center">
-          <img src="/assets/dar-adloun-logo-light.svg" alt="دار الأدلون" class="h-8" />
+          <img src="/assets/dar-adloun-logo-light.svg" alt="دار عدلون" class="h-8" />
         </RouterLink>
         <button @click="sidebarOpen = false" class="lg:hidden text-secondary-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

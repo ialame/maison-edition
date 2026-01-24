@@ -95,18 +95,22 @@ async function handleImageUpload(event: Event) {
 
   const file = input.files[0]
 
-  // Prévisualiser l'image
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    imagePreview.value = e.target?.result as string
+  // Prévisualiser l'image avec URL.createObjectURL (plus compatible)
+  try {
+    imagePreview.value = URL.createObjectURL(file)
+  } catch (e) {
+    console.warn('معاينة الصورة غير متاحة:', e)
   }
-  reader.readAsDataURL(file)
 
   // Uploader l'image
   uploading.value = true
   try {
     const response = await uploadApi.upload(file, 'livres')
     form.value.couverture = response.data.path
+    // Mettre à jour l'aperçu avec l'URL du serveur
+    if (response.data.path) {
+      imagePreview.value = `/uploads/${response.data.path}`
+    }
   } catch (error) {
     console.error('خطأ في رفع الصورة:', error)
     alert('حدث خطأ أثناء رفع الصورة')

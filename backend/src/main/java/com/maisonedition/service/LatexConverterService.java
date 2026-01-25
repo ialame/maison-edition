@@ -143,6 +143,15 @@ public class LatexConverterService {
         html = html.replaceAll("\\\\textenglish\\{([^}]*)\\}", "<span dir=\"ltr\">$1</span>");
         html = html.replaceAll("\\\\textarabic\\{([^}]*)\\}", "$1");
 
+        // Custom commands for foreign languages
+        html = html.replaceAll("\\\\newcommand\\{[^}]*\\}\\[[^\\]]*\\]\\{[^}]*\\}", ""); // Remove \newcommand definitions
+        html = html.replaceAll("\\\\newcommand\\{[^}]*\\}\\{[^}]*\\}", ""); // Remove \newcommand without args
+        html = html.replaceAll("\\\\fr\\{([^}]*)\\}", "<span dir=\"ltr\" lang=\"fr\">$1</span>");
+        html = html.replaceAll("\\\\foreignlanguage\\{french\\}\\{([^}]*)\\}", "<span dir=\"ltr\" lang=\"fr\">$1</span>");
+        html = html.replaceAll("\\\\foreignlanguage\\{english\\}\\{([^}]*)\\}", "<span dir=\"ltr\" lang=\"en\">$1</span>");
+        html = html.replaceAll("\\\\foreignlanguage\\{arabic\\}\\{([^}]*)\\}", "<span dir=\"rtl\" lang=\"ar\">$1</span>");
+        html = html.replaceAll("\\\\foreignlanguage\\{[^}]*\\}\\{([^}]*)\\}", "<span>$1</span>"); // Generic fallback
+
         // Footnotes - convert to parenthetical note
         html = html.replaceAll("\\\\footnote\\{([^}]*)\\}", " <span class=\"footnote\" style=\"font-size: 0.85em; color: #666\">($1)</span>");
 

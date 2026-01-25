@@ -3,7 +3,6 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { chapitreApi, livreApi } from '@/services/api'
 import type { ChapitreDetail, ChapitreList, Livre } from '@/types'
-import PdfViewer from '@/components/PdfViewer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -114,8 +113,8 @@ onMounted(loadData)
 
           <!-- Controls -->
           <div class="flex items-center gap-2">
-            <!-- Font size controls (only for text content) -->
-            <template v-if="chapitre && !chapitre.pdfPath">
+            <!-- Font size controls -->
+            <template v-if="chapitre">
               <button
                 @click="decreaseFontSize"
                 class="p-2 rounded-lg text-secondary-600 hover:bg-amber-100 transition-colors"
@@ -256,14 +255,22 @@ onMounted(loadData)
           </div>
         </header>
 
-        <!-- PDF Viewer -->
-        <div v-if="pdfUrl" class="mb-12">
-          <PdfViewer :url="pdfUrl" />
+        <!-- PDF Download Button (if available) -->
+        <div v-if="pdfUrl" class="mb-8 flex justify-center">
+          <a
+            :href="pdfUrl"
+            download
+            class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-l from-primary-600 to-amber-600 text-white rounded-xl hover:from-primary-700 hover:to-amber-700 transition-all shadow-lg hover:shadow-xl"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="font-medium">تحميل الفصل بصيغة PDF</span>
+          </a>
         </div>
 
         <!-- Text Content (HTML from TipTap) -->
         <div
-          v-else
           class="prose prose-lg prose-amber max-w-none reading-content font-serif leading-loose"
           :style="{ fontSize: `${fontSize}px` }"
           v-html="chapitre.contenu"

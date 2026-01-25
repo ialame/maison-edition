@@ -24,8 +24,7 @@
     "@tiptap/extension-text-style": "^2.2.4",
     "@tiptap/extension-color": "^2.2.4",
     "@tiptap/extension-highlight": "^2.2.4",
-    "katex": "^0.16.9",
-    "pdfjs-dist": "^4.0.379"
+    "katex": "^0.16.9"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.3",

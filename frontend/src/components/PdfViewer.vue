@@ -12,7 +12,6 @@ const props = defineProps<{
 const containerRef = ref<HTMLDivElement | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const currentPage = ref(1)
 const totalPages = ref(0)
 const scale = ref(1.5)
 const pdfDoc = ref<any>(null)

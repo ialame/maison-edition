@@ -258,12 +258,14 @@ onMounted(loadData)
         <!-- PDF Viewer -->
         <div v-if="pdfUrl" class="mb-12">
           <div class="bg-secondary-100 rounded-xl overflow-hidden shadow-lg">
-            <iframe
-              :src="pdfUrl"
+            <object
+              :data="pdfUrl"
+              type="application/pdf"
               class="w-full"
               style="height: 80vh; min-height: 600px;"
-              frameborder="0"
-            ></iframe>
+            >
+              <embed :src="pdfUrl" type="application/pdf" class="w-full" style="height: 80vh; min-height: 600px;" />
+            </object>
           </div>
           <p class="text-center text-secondary-500 mt-4 text-sm">
             إذا لم يظهر الملف،

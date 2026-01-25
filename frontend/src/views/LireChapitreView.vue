@@ -20,7 +20,7 @@ const numero = computed(() => Number(route.params.numero))
 
 const pdfUrl = computed(() => {
   if (chapitre.value?.pdfPath) {
-    return chapitreApi.getPdfUrl(livreId.value, numero.value)
+    return `/uploads/${chapitre.value.pdfPath}`
   }
   return null
 })

@@ -8,7 +8,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Highlight from '@tiptap/extension-highlight'
-import { chapitreApi, livreApi, uploadApi } from '@/services/api'
+import { chapitreApi, livreApi, uploadApi, latexApi } from '@/services/api'
 import type { Chapitre, Livre } from '@/types'
 
 const route = useRoute()
@@ -24,6 +24,9 @@ const saving = ref(false)
 const uploadingPdf = ref(false)
 const pdfFile = ref<File | null>(null)
 const contentMode = ref<'editor' | 'pdf'>('editor')
+const showLatexModal = ref(false)
+const latexContent = ref('')
+const convertingLatex = ref(false)
 
 const form = ref({
   titre: '',
@@ -220,6 +223,30 @@ async function deletePdf() {
     } catch (error) {
       console.error('خطأ في حذف PDF:', error)
     }
+  }
+}
+
+function openLatexModal() {
+  latexContent.value = ''
+  showLatexModal.value = true
+}
+
+async function convertLatex() {
+  if (!latexContent.value.trim()) return
+
+  convertingLatex.value = true
+  try {
+    const response = await latexApi.convert(latexContent.value)
+    const html = response.data.html
+    // Insert the converted HTML into the editor
+    editor.value?.commands.setContent(html)
+    showLatexModal.value = false
+    latexContent.value = ''
+  } catch (error) {
+    console.error('خطأ في تحويل LaTeX:', error)
+    alert('حدث خطأ أثناء تحويل LaTeX')
+  } finally {
+    convertingLatex.value = false
   }
 }
 
@@ -604,6 +631,14 @@ onMounted(loadData)
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </button>
+              <button
+                type="button"
+                @click="openLatexModal"
+                class="p-2 rounded hover:bg-white text-amber-700"
+                title="استيراد من LaTeX"
+              >
+                <span class="text-xs font-bold">TEX</span>
+              </button>
 
               <div class="w-px h-6 bg-secondary-300 mx-1 self-center"></div>
 
@@ -643,6 +678,57 @@ onMounted(loadData)
           </button>
           <button @click="saveForm" class="btn btn-primary" :disabled="saving">
             {{ saving ? 'جارٍ الحفظ...' : (editingChapitre ? 'حفظ التعديلات' : 'إضافة الفصل') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LaTeX Import Modal -->
+    <div v-if="showLatexModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="p-6 border-b bg-gradient-to-l from-amber-100 to-amber-50">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-bold text-secondary-800">استيراد من LaTeX</h3>
+            <button @click="showLatexModal = false" class="p-2 rounded-lg hover:bg-white/50 text-secondary-600">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p class="text-sm text-secondary-500 mt-2">
+            الصق كود LaTeX أدناه لتحويله إلى HTML. سيتم استبدال الصور بعلامات [IMAGE: filename] لإضافتها يدويًا.
+          </p>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <textarea
+            v-model="latexContent"
+            class="w-full h-80 p-4 border border-secondary-300 rounded-xl font-mono text-sm bg-secondary-50 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+            dir="ltr"
+            placeholder="الصق كود LaTeX هنا...
+
+مثال:
+\chapter{العنوان الرئيسي}
+\section{القسم الأول}
+نص الفقرة هنا...
+\includegraphics{image1.jpg}
+\subsection{القسم الفرعي}"
+          ></textarea>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-6 border-t bg-secondary-50 flex justify-end gap-3">
+          <button type="button" @click="showLatexModal = false" class="btn btn-secondary">
+            إلغاء
+          </button>
+          <button
+            @click="convertLatex"
+            class="btn btn-primary"
+            :disabled="convertingLatex || !latexContent.trim()"
+          >
+            {{ convertingLatex ? 'جارٍ التحويل...' : 'تحويل وإدراج' }}
           </button>
         </div>
       </div>

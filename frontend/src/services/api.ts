@@ -229,4 +229,9 @@ export const evenementApi = {
     api.delete(`/evenements/${id}`)
 }
 
+export const latexApi = {
+  convert: (latex: string) =>
+    api.post<{ html: string }>('/admin/convert-latex', { latex })
+}
+
 export default api

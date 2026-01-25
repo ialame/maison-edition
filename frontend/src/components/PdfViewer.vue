@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, onUnmounted } from 'vue'
-import * as pdfjsLib from 'pdfjs-dist'
+// Use legacy build to avoid private field issues with Vite bundling
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 
-// Configure worker - use unpkg which has all versions
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+// Configure worker - use legacy worker for compatibility
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.0.379/legacy/build/pdf.worker.min.mjs`
 
 const props = defineProps<{
   url: string

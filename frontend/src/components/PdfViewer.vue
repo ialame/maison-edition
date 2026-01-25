@@ -2,8 +2,8 @@
 import { ref, onMounted, watch, onUnmounted } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Configure worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+// Configure worker - use unpkg which has all versions
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
 const props = defineProps<{
   url: string

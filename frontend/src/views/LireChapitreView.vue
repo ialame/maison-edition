@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { chapitreApi, livreApi } from '@/services/api'
 import type { ChapitreDetail, ChapitreList, Livre } from '@/types'
+import PdfViewer from '@/components/PdfViewer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -257,20 +258,7 @@ onMounted(loadData)
 
         <!-- PDF Viewer -->
         <div v-if="pdfUrl" class="mb-12">
-          <div class="bg-secondary-100 rounded-xl overflow-hidden shadow-lg">
-            <object
-              :data="pdfUrl"
-              type="application/pdf"
-              class="w-full"
-              style="height: 80vh; min-height: 600px;"
-            >
-              <embed :src="pdfUrl" type="application/pdf" class="w-full" style="height: 80vh; min-height: 600px;" />
-            </object>
-          </div>
-          <p class="text-center text-secondary-500 mt-4 text-sm">
-            إذا لم يظهر الملف،
-            <a :href="pdfUrl" target="_blank" class="text-primary-600 hover:underline">اضغط هنا لتحميله</a>
-          </p>
+          <PdfViewer :url="pdfUrl" />
         </div>
 
         <!-- Text Content (HTML from TipTap) -->

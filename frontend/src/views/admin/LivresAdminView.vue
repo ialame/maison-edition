@@ -150,8 +150,9 @@ async function saveForm() {
 
     showModal.value = false
     await loadData()
-  } catch (error) {
+  } catch (error: any) {
     console.error('خطأ في الحفظ:', error)
+    alert('حدث خطأ أثناء الحفظ: ' + (error.response?.data?.message || error.message || 'خطأ غير معروف'))
   }
 }
 

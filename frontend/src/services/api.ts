@@ -5,6 +5,9 @@ const api = axios.create({
   baseURL: '/api',
   headers: {
     'Content-Type': 'application/json'
+  },
+  paramsSerializer: {
+    indexes: null // Serialize arrays as key=val1&key=val2 (Spring format) instead of key[]=val1&key[]=val2
   }
 })
 

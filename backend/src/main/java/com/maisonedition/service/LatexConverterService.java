@@ -261,14 +261,27 @@ public class LatexConverterService {
             String placeholder = "%%MATH_BLOCK_" + i + "%%";
             if (block.startsWith("DISPLAY:")) {
                 String formula = block.substring("DISPLAY:".length());
+                formula = convertMathForKatex(formula);
                 html = html.replace(placeholder, "$$" + formula + "$$");
             } else {
                 String formula = block.substring("INLINE:".length());
+                formula = convertMathForKatex(formula);
                 html = html.replace(placeholder, "$" + formula + "$");
             }
         }
 
         return html.trim();
+    }
+
+    /**
+     * Convert LaTeX math commands to KaTeX-compatible equivalents.
+     */
+    private String convertMathForKatex(String formula) {
+        // Replace \mbox{...} with \text{...} (KaTeX supports \text)
+        formula = formula.replaceAll("\\\\mbox\\{", "\\\\text{");
+        // Replace \hbox{...} with \text{...}
+        formula = formula.replaceAll("\\\\hbox\\{", "\\\\text{");
+        return formula;
     }
 
     private String escapeHtml(String text) {

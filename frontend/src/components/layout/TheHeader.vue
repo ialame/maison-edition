@@ -36,10 +36,10 @@ const navigation = [
 <template>
   <header
       :class="[
-      'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+      'fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/95 backdrop-blur-md',
       isScrolled
-        ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-primary-100/50'
-        : 'bg-transparent'
+        ? 'shadow-lg border-b border-primary-100/50'
+        : ''
     ]"
   >
     <div class="container-custom">

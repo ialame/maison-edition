@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { chapitreApi, livreApi } from '@/services/api'
 import type { ChapitreDetail, ChapitreList, Livre } from '@/types'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +16,7 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const showTableOfContents = ref(false)
 const fontSize = ref(20)
+const contentRef = ref<HTMLDivElement | null>(null)
 
 const livreId = computed(() => Number(route.params.livreId))
 const numero = computed(() => Number(route.params.numero))
@@ -64,7 +67,31 @@ async function loadData() {
     }
   } finally {
     loading.value = false
+    await nextTick()
+    renderMath()
   }
+}
+
+function renderMath() {
+  if (!contentRef.value) return
+  // Render display math
+  contentRef.value.querySelectorAll('.math-display').forEach((el) => {
+    const formula = (el as HTMLElement).dataset.math || el.textContent || ''
+    try {
+      katex.render(formula, el as HTMLElement, { displayMode: true, throwOnError: false })
+    } catch (e) {
+      console.warn('KaTeX error:', e)
+    }
+  })
+  // Render inline math
+  contentRef.value.querySelectorAll('.math-inline').forEach((el) => {
+    const formula = (el as HTMLElement).dataset.math || el.textContent || ''
+    try {
+      katex.render(formula, el as HTMLElement, { displayMode: false, throwOnError: false })
+    } catch (e) {
+      console.warn('KaTeX error:', e)
+    }
+  })
 }
 
 function goToChapitre(num: number) {
@@ -271,6 +298,7 @@ onMounted(loadData)
 
         <!-- Text Content (HTML from TipTap) -->
         <div
+          ref="contentRef"
           class="prose prose-lg prose-amber max-w-none reading-content font-serif leading-loose"
           :style="{ fontSize: `${fontSize}px` }"
           v-html="chapitre.contenu"

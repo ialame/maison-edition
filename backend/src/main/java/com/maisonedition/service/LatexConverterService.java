@@ -1,6 +1,8 @@
 package com.maisonedition.service;
 
 import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +15,63 @@ public class LatexConverterService {
         }
 
         String html = latex;
+
+        // === STEP 1: Extract and protect math formulas before any conversion ===
+        List<String> mathBlocks = new ArrayList<>();
+
+        // Extract display math $$...$$ (must be before inline $...$)
+        Pattern displayMathPattern = Pattern.compile("\\$\\$(.*?)\\$\\$", Pattern.DOTALL);
+        Matcher displayMatcher = displayMathPattern.matcher(html);
+        StringBuffer sb1 = new StringBuffer();
+        while (displayMatcher.find()) {
+            String mathContent = displayMatcher.group(1).trim();
+            int index = mathBlocks.size();
+            mathBlocks.add("DISPLAY:" + mathContent);
+            displayMatcher.appendReplacement(sb1, Matcher.quoteReplacement("%%MATH_BLOCK_" + index + "%%"));
+        }
+        displayMatcher.appendTail(sb1);
+        html = sb1.toString();
+
+        // Extract \[...\] display math
+        Pattern displayMathPattern2 = Pattern.compile("\\\\\\[(.*?)\\\\\\]", Pattern.DOTALL);
+        Matcher displayMatcher2 = displayMathPattern2.matcher(html);
+        StringBuffer sb1b = new StringBuffer();
+        while (displayMatcher2.find()) {
+            String mathContent = displayMatcher2.group(1).trim();
+            int index = mathBlocks.size();
+            mathBlocks.add("DISPLAY:" + mathContent);
+            displayMatcher2.appendReplacement(sb1b, Matcher.quoteReplacement("%%MATH_BLOCK_" + index + "%%"));
+        }
+        displayMatcher2.appendTail(sb1b);
+        html = sb1b.toString();
+
+        // Extract inline math $...$
+        Pattern inlineMathPattern = Pattern.compile("(?<!\\\\)\\$([^$]+?)\\$");
+        Matcher inlineMatcher = inlineMathPattern.matcher(html);
+        StringBuffer sb2 = new StringBuffer();
+        while (inlineMatcher.find()) {
+            String mathContent = inlineMatcher.group(1).trim();
+            int index = mathBlocks.size();
+            mathBlocks.add("INLINE:" + mathContent);
+            inlineMatcher.appendReplacement(sb2, Matcher.quoteReplacement("%%MATH_BLOCK_" + index + "%%"));
+        }
+        inlineMatcher.appendTail(sb2);
+        html = sb2.toString();
+
+        // Extract \(...\) inline math
+        Pattern inlineMathPattern2 = Pattern.compile("\\\\\\((.*?)\\\\\\)", Pattern.DOTALL);
+        Matcher inlineMatcher2 = inlineMathPattern2.matcher(html);
+        StringBuffer sb2b = new StringBuffer();
+        while (inlineMatcher2.find()) {
+            String mathContent = inlineMatcher2.group(1).trim();
+            int index = mathBlocks.size();
+            mathBlocks.add("INLINE:" + mathContent);
+            inlineMatcher2.appendReplacement(sb2b, Matcher.quoteReplacement("%%MATH_BLOCK_" + index + "%%"));
+        }
+        inlineMatcher2.appendTail(sb2b);
+        html = sb2b.toString();
+
+        // === STEP 2: Normal LaTeX to HTML conversion ===
 
         // Remove preamble (everything before \begin{document})
         html = html.replaceAll("(?s).*?\\\\begin\\{document\\}", "");
@@ -196,6 +255,35 @@ public class LatexConverterService {
         html = html.replaceAll("<p><(h[1-6]|ul|ol|blockquote|div|figure)", "<$1");
         html = html.replaceAll("</(h[1-6]|ul|ol|blockquote|div|figure)></p>", "</$1>");
 
+        // === STEP 3: Restore math formulas as KaTeX-compatible HTML ===
+        for (int i = 0; i < mathBlocks.size(); i++) {
+            String block = mathBlocks.get(i);
+            String placeholder = "%%MATH_BLOCK_" + i + "%%";
+            if (block.startsWith("DISPLAY:")) {
+                String formula = block.substring("DISPLAY:".length());
+                html = html.replace(placeholder,
+                    "<div class=\"math-display\" data-math=\"" + escapeHtmlAttr(formula) + "\">" + escapeHtml(formula) + "</div>");
+            } else {
+                String formula = block.substring("INLINE:".length());
+                html = html.replace(placeholder,
+                    "<span class=\"math-inline\" data-math=\"" + escapeHtmlAttr(formula) + "\">" + escapeHtml(formula) + "</span>");
+            }
+        }
+
         return html.trim();
+    }
+
+    private String escapeHtml(String text) {
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;");
+    }
+
+    private String escapeHtmlAttr(String text) {
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;")
+                   .replace("'", "&#39;");
     }
 }

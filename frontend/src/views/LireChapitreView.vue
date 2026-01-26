@@ -74,24 +74,62 @@ async function loadData() {
 
 function renderMath() {
   if (!contentRef.value) return
-  // Render display math
-  contentRef.value.querySelectorAll('.math-display').forEach((el) => {
-    const formula = (el as HTMLElement).dataset.math || el.textContent || ''
-    try {
-      katex.render(formula, el as HTMLElement, { displayMode: true, throwOnError: false })
-    } catch (e) {
-      console.warn('KaTeX error:', e)
+
+  // Walk through all text nodes and replace $$...$$ and $...$ with KaTeX
+  const walker = document.createTreeWalker(contentRef.value, NodeFilter.SHOW_TEXT)
+  const textNodes: Text[] = []
+  let node: Text | null
+  while ((node = walker.nextNode() as Text | null)) {
+    if (node.textContent && (node.textContent.includes('$$') || node.textContent.includes('$'))) {
+      textNodes.push(node)
     }
-  })
-  // Render inline math
-  contentRef.value.querySelectorAll('.math-inline').forEach((el) => {
-    const formula = (el as HTMLElement).dataset.math || el.textContent || ''
-    try {
-      katex.render(formula, el as HTMLElement, { displayMode: false, throwOnError: false })
-    } catch (e) {
-      console.warn('KaTeX error:', e)
+  }
+
+  for (const textNode of textNodes) {
+    const text = textNode.textContent || ''
+    // Match $$...$$ (display) and $...$ (inline)
+    const regex = /\$\$([\s\S]*?)\$\$|\$([^$]+?)\$/g
+    let match
+    let hasMatch = false
+
+    // Check if there's any match first
+    regex.lastIndex = 0
+    if (!regex.test(text)) continue
+    regex.lastIndex = 0
+
+    const fragment = document.createDocumentFragment()
+    let lastIndex = 0
+
+    while ((match = regex.exec(text)) !== null) {
+      hasMatch = true
+      // Add text before match
+      if (match.index > lastIndex) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)))
+      }
+
+      const isDisplay = match[1] !== undefined
+      const formula = isDisplay ? match[1].trim() : match[2].trim()
+
+      const el = document.createElement(isDisplay ? 'div' : 'span')
+      el.className = isDisplay ? 'math-display' : 'math-inline'
+      try {
+        katex.render(formula, el, { displayMode: isDisplay, throwOnError: false })
+      } catch (e) {
+        el.textContent = formula
+        console.warn('KaTeX error:', e)
+      }
+      fragment.appendChild(el)
+      lastIndex = regex.lastIndex
     }
-  })
+
+    if (hasMatch) {
+      // Add remaining text
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)))
+      }
+      textNode.parentNode?.replaceChild(fragment, textNode)
+    }
+  }
 }
 
 function goToChapitre(num: number) {

@@ -255,18 +255,16 @@ public class LatexConverterService {
         html = html.replaceAll("<p><(h[1-6]|ul|ol|blockquote|div|figure)", "<$1");
         html = html.replaceAll("</(h[1-6]|ul|ol|blockquote|div|figure)></p>", "</$1>");
 
-        // === STEP 3: Restore math formulas as KaTeX-compatible HTML ===
+        // === STEP 3: Restore math formulas with delimiters (KaTeX renders them in frontend) ===
         for (int i = 0; i < mathBlocks.size(); i++) {
             String block = mathBlocks.get(i);
             String placeholder = "%%MATH_BLOCK_" + i + "%%";
             if (block.startsWith("DISPLAY:")) {
                 String formula = block.substring("DISPLAY:".length());
-                html = html.replace(placeholder,
-                    "<div class=\"math-display\" data-math=\"" + escapeHtmlAttr(formula) + "\">" + escapeHtml(formula) + "</div>");
+                html = html.replace(placeholder, "$$" + formula + "$$");
             } else {
                 String formula = block.substring("INLINE:".length());
-                html = html.replace(placeholder,
-                    "<span class=\"math-inline\" data-math=\"" + escapeHtmlAttr(formula) + "\">" + escapeHtml(formula) + "</span>");
+                html = html.replace(placeholder, "$" + formula + "$");
             }
         }
 

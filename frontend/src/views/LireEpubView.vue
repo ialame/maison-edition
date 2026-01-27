@@ -175,6 +175,24 @@ async function initReader() {
       allowScriptedContent: true
     })
 
+    // Normalize Arabic Presentation Forms (from PDF→EPUB conversion)
+    // PDF stores Arabic as isolated glyphs (U+FB50-U+FEFF), which don't connect.
+    // NFKC normalization converts them to standard Arabic (U+0600-U+06FF).
+    rendition.hooks.content.register((contents: any) => {
+      const doc = contents.document
+      if (!doc?.body) return
+      const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
+      let node: Text | null
+      while ((node = walker.nextNode() as Text | null)) {
+        const original = node.nodeValue
+        if (!original) continue
+        const normalized = original.normalize('NFKC')
+        if (normalized !== original) {
+          node.nodeValue = normalized
+        }
+      }
+    })
+
     // Set direction to RTL
     rendition.themes.default({
       body: {

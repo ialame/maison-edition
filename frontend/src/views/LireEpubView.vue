@@ -264,10 +264,12 @@ function handleKeyPress(e: KeyboardEvent) {
 }
 
 function nextPage() {
+  console.log('nextPage called')
   rendition?.next()
 }
 
 function prevPage() {
+  console.log('prevPage called')
   rendition?.prev()
 }
 
@@ -786,11 +788,11 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- Navigation arrows -->
+      <!-- Navigation arrows - z-20 to stay above epub.js iframe -->
       <button
         v-show="!loading && !error"
         @click.stop="nextPage"
-        class="absolute top-1/2 left-2 -translate-y-1/2 w-12 h-24 flex items-center justify-center opacity-20 hover:opacity-70 transition-opacity"
+        class="absolute z-20 top-1/2 left-2 -translate-y-1/2 w-12 h-24 flex items-center justify-center opacity-30 hover:opacity-80 transition-opacity bg-black/5 hover:bg-black/10 rounded-lg"
         title="الصفحة التالية"
       >
         <svg class="w-8 h-8" :class="textColors[theme]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -800,7 +802,7 @@ onBeforeUnmount(() => {
       <button
         v-show="!loading && !error"
         @click.stop="prevPage"
-        class="absolute top-1/2 right-2 -translate-y-1/2 w-12 h-24 flex items-center justify-center opacity-20 hover:opacity-70 transition-opacity"
+        class="absolute z-20 top-1/2 right-2 -translate-y-1/2 w-12 h-24 flex items-center justify-center opacity-30 hover:opacity-80 transition-opacity bg-black/5 hover:bg-black/10 rounded-lg"
         title="الصفحة السابقة"
       >
         <svg class="w-8 h-8" :class="textColors[theme]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

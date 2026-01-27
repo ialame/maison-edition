@@ -138,14 +138,6 @@ async function initReader() {
     const epubUrl = livreApi.getEpubUrl(livreId.value)
     console.log('Loading EPUB from:', epubUrl)
 
-    // First, verify the EPUB file is accessible
-    const checkResponse = await fetch(epubUrl, { method: 'HEAD' })
-    if (!checkResponse.ok) {
-      error.value = `ملف EPUB غير متوفر (${checkResponse.status})`
-      return
-    }
-    console.log('EPUB file accessible, loading with epub.js...')
-
     book = ePub(epubUrl)
 
     // Add timeout for book.ready

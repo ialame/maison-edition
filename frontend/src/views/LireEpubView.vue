@@ -756,16 +756,23 @@ onBeforeUnmount(() => {
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col relative">
-      <!-- Loading -->
-      <div v-if="loading" class="flex-1 flex items-center justify-center">
+      <!-- EPUB Reader - always in DOM so epub.js can measure dimensions -->
+      <div
+        ref="readerRef"
+        class="epub-reader-container"
+        @click="showControls = !showControls"
+      ></div>
+
+      <!-- Loading overlay -->
+      <div v-if="loading" :class="['absolute inset-0 flex items-center justify-center z-10', bgColors[theme]]">
         <div class="text-center">
           <div class="animate-spin rounded-full h-16 w-16 border-4 border-amber-200 border-t-amber-700 mx-auto mb-4"></div>
           <p :class="textColors[theme]">جارٍ تحميل الكتاب...</p>
         </div>
       </div>
 
-      <!-- Error -->
-      <div v-else-if="error" class="flex-1 flex items-center justify-center">
+      <!-- Error overlay -->
+      <div v-if="!loading && error" :class="['absolute inset-0 flex items-center justify-center z-10', bgColors[theme]]">
         <div class="text-center max-w-md px-4">
           <div class="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg class="w-12 h-12 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -778,14 +785,6 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </div>
-
-      <!-- EPUB Reader -->
-      <div
-        v-show="!loading && !error"
-        ref="readerRef"
-        class="epub-reader-container"
-        @click="showControls = !showControls"
-      ></div>
 
       <!-- Navigation arrows -->
       <button

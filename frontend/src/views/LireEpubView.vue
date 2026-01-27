@@ -138,7 +138,17 @@ async function initReader() {
     const epubUrl = livreApi.getEpubUrl(livreId.value)
     console.log('Loading EPUB from:', epubUrl)
 
-    book = ePub(epubUrl)
+    // Fetch EPUB as ArrayBuffer so epub.js processes it in memory
+    // (passing a URL makes epub.js try to load individual files relatively)
+    const epubResponse = await fetch(epubUrl)
+    if (!epubResponse.ok) {
+      error.value = `ملف EPUB غير متوفر (${epubResponse.status})`
+      return
+    }
+    const epubData = await epubResponse.arrayBuffer()
+    console.log('EPUB downloaded:', (epubData.byteLength / 1024 / 1024).toFixed(1), 'MB')
+
+    book = ePub(epubData)
 
     // Add timeout for book.ready
     await Promise.race([

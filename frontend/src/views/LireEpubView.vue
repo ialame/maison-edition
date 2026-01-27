@@ -166,7 +166,8 @@ async function initReader() {
       width: '100%',
       height: '100%',
       flow: 'paginated',
-      spread: 'none'
+      spread: 'none',
+      allowScriptedContent: true
     })
 
     // Set direction to RTL

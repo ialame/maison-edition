@@ -129,18 +129,6 @@ public class LivreService {
         return LivreDTO.fromEntity(livreRepository.save(livre));
     }
 
-    public Livre updateEpubPath(Long id, String epubPath) {
-        Livre livre = livreRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Livre non trouvé avec l'id: " + id));
-        livre.setEpubPath(epubPath);
-        return livreRepository.save(livre);
-    }
-
-    public Livre findEntityById(Long id) {
-        return livreRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Livre non trouvé avec l'id: " + id));
-    }
-
     public void delete(Long id) {
         livreRepository.deleteById(id);
     }

@@ -10,7 +10,6 @@ const loading = ref(true)
 const showModal = ref(false)
 const editingLivre = ref<Livre | null>(null)
 const uploading = ref(false)
-const uploadingEpub = ref(false)
 const imagePreview = ref<string | null>(null)
 
 const form = ref({
@@ -168,40 +167,6 @@ async function deleteLivre(id: number) {
   }
 }
 
-async function handleEpubUpload(livreId: number, event: Event) {
-  const input = event.target as HTMLInputElement
-  if (!input.files?.length) return
-
-  const file = input.files[0]
-  if (!file.name.endsWith('.epub')) {
-    alert('يرجى اختيار ملف EPUB')
-    return
-  }
-
-  uploadingEpub.value = true
-  try {
-    await livreApi.uploadEpub(livreId, file)
-    await loadData()
-  } catch (error: any) {
-    console.error('خطأ في رفع EPUB:', error)
-    alert('حدث خطأ أثناء رفع ملف EPUB')
-  } finally {
-    uploadingEpub.value = false
-    input.value = ''
-  }
-}
-
-async function deleteEpub(livreId: number) {
-  if (confirm('هل أنت متأكد من حذف ملف EPUB؟')) {
-    try {
-      await livreApi.deleteEpub(livreId)
-      await loadData()
-    } catch (error) {
-      console.error('خطأ في حذف EPUB:', error)
-    }
-  }
-}
-
 onMounted(loadData)
 </script>
 
@@ -277,15 +242,6 @@ onMounted(loadData)
               <button @click="deleteLivre(livre.id)" class="text-red-600 hover:text-red-800 ml-3">
                 حذف
               </button>
-              <!-- EPUB -->
-              <span v-if="livre.epubPath" class="inline-flex items-center gap-1">
-                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">EPUB</span>
-                <button @click="deleteEpub(livre.id)" class="text-red-400 hover:text-red-600 text-xs" title="حذف EPUB">&#x2715;</button>
-              </span>
-              <label v-else class="cursor-pointer text-purple-600 hover:text-purple-800 text-xs" :class="uploadingEpub ? 'opacity-50 pointer-events-none' : ''">
-                +EPUB
-                <input type="file" accept=".epub" class="hidden" @change="handleEpubUpload(livre.id, $event)" :disabled="uploadingEpub" />
-              </label>
             </td>
           </tr>
           <tr v-if="livres.length === 0">

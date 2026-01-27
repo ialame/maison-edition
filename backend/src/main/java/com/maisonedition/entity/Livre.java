@@ -45,9 +45,6 @@ public class Livre {
 
     private String format;
 
-    @Column
-    private String epubPath;
-
     @Column(nullable = false)
     @Builder.Default
     private Boolean disponible = true;

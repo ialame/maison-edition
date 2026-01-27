@@ -24,7 +24,6 @@ public class LivreDTO {
     private LocalDate datePublication;
     private String langue;
     private String format;
-    private String epubPath;
     private Boolean disponible;
     private Boolean enVedette;
     private List<AuteurDTO> auteurs;
@@ -43,7 +42,6 @@ public class LivreDTO {
                 .datePublication(livre.getDatePublication())
                 .langue(livre.getLangue())
                 .format(livre.getFormat())
-                .epubPath(livre.getEpubPath())
                 .disponible(livre.getDisponible())
                 .enVedette(livre.getEnVedette())
                 .auteurs(livre.getAuteurs() != null ?

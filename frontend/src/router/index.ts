@@ -66,11 +66,6 @@ const router = createRouter({
       ]
     },
     {
-      path: '/livres/:id/epub',
-      name: 'lire-epub',
-      component: () => import('@/views/LireEpubView.vue')
-    },
-    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/public/LoginView.vue')

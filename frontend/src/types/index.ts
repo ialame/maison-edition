@@ -10,7 +10,6 @@ export interface Livre {
   datePublication: string | null
   langue: string | null
   format: string | null
-  epubPath: string | null
   disponible: boolean
   enVedette: boolean
   auteurs: Auteur[]

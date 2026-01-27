@@ -180,8 +180,15 @@ onMounted(async () => {
 
           <!-- Actions -->
           <div class="flex flex-wrap gap-4">
-            <button class="btn btn-primary" :disabled="!livre.disponible">
-              {{ livre.disponible ? 'اطلب الآن' : 'غير متوفر' }}
+            <RouterLink
+              v-if="livre.disponible"
+              :to="`/livres/${livre.id}/commander`"
+              class="btn btn-primary"
+            >
+              اطلب الآن
+            </RouterLink>
+            <button v-else class="btn btn-primary opacity-50 cursor-not-allowed" disabled>
+              غير متوفر
             </button>
             <RouterLink
               v-if="chapitres.some(c => c.gratuit)"

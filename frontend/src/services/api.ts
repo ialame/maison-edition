@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail } from '@/types'
+import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -230,6 +230,17 @@ export const evenementApi = {
 
   delete: (id: number) =>
     api.delete(`/evenements/${id}`)
+}
+
+export const commandeApi = {
+  checkout: (request: CheckoutRequest) =>
+    api.post<{ checkoutUrl: string }>('/commandes/checkout', request),
+
+  getBySession: (sessionId: string) =>
+    api.get<Commande>('/commandes/by-session', { params: { sessionId } }),
+
+  mesCommandes: () =>
+    api.get<Commande[]>('/commandes/mes-commandes')
 }
 
 export const latexApi = {

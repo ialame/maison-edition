@@ -29,6 +29,16 @@ const router = createRouter({
           component: () => import('@/views/LireChapitreView.vue')
         },
         {
+          path: 'livres/:id/commander',
+          name: 'commander-livre',
+          component: () => import('@/views/public/CommanderLivreView.vue')
+        },
+        {
+          path: 'commande/succes',
+          name: 'commande-succes',
+          component: () => import('@/views/public/CommandeSuccesView.vue')
+        },
+        {
           path: 'auteurs',
           name: 'auteurs',
           component: () => import('@/views/public/AuteursView.vue')

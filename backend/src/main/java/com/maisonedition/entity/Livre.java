@@ -37,6 +37,15 @@ public class Livre {
     @Column(precision = 10, scale = 2)
     private BigDecimal prix;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal prixNumerique;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal prixAbonnementMensuel;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal prixAbonnementAnnuel;
+
     private Integer nombrePages;
 
     private LocalDate datePublication;

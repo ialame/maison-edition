@@ -281,25 +281,19 @@ onUnmounted(() => {
               <!-- Font size controls -->
               <button
                 @click="decreaseFontSize"
-                class="p-2 rounded-lg transition-colors"
+                class="px-2 py-1 rounded-lg transition-colors font-serif text-sm"
                 :class="[currentTheme.headerMuted, theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-amber-100']"
                 title="تصغير الخط"
               >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <text x="2" y="20" font-size="18" font-weight="bold">A</text>
-                  <text x="15" y="20" font-size="12">-</text>
-                </svg>
+                A-
               </button>
               <button
                 @click="increaseFontSize"
-                class="p-2 rounded-lg transition-colors"
+                class="px-2 py-1 rounded-lg transition-colors font-serif text-base font-bold"
                 :class="[currentTheme.headerMuted, theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-amber-100']"
                 title="تكبير الخط"
               >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <text x="2" y="20" font-size="18" font-weight="bold">A</text>
-                  <text x="15" y="20" font-size="12">+</text>
-                </svg>
+                A+
               </button>
 
               <!-- Settings toggle -->

@@ -162,13 +162,14 @@ async function initReader() {
       return
     }
 
-    // Calculate explicit height - epub.js needs pixel values, not percentages
+    // Calculate explicit dimensions - epub.js needs pixel values
     const headerHeight = 56 // h-14
     const footerHeight = 48
     const availableHeight = window.innerHeight - headerHeight - footerHeight
+    const readerWidth = Math.min(800, window.innerWidth)
 
     rendition = book.renderTo(readerRef.value, {
-      width: '100%',
+      width: `${readerWidth}px`,
       height: `${availableHeight}px`,
       flow: 'paginated',
       spread: 'none',
@@ -470,7 +471,8 @@ function handleResize() {
   const headerHeight = 56
   const footerHeight = 48
   const availableHeight = window.innerHeight - headerHeight - footerHeight
-  ;(rendition as any).resize('100%', `${availableHeight}px`)
+  const readerWidth = Math.min(800, window.innerWidth)
+  ;(rendition as any).resize(`${readerWidth}px`, `${availableHeight}px`)
 }
 
 onMounted(() => {
@@ -791,7 +793,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col relative">
+    <div class="flex-1 flex flex-col relative items-center">
       <!-- EPUB Reader - always in DOM so epub.js can measure dimensions -->
       <div
         ref="readerRef"
@@ -876,5 +878,7 @@ onBeforeUnmount(() => {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  width: 100%;
+  max-width: 800px;
 }
 </style>

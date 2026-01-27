@@ -175,22 +175,32 @@ async function initReader() {
       allowScriptedContent: true
     })
 
-    // Normalize Arabic Presentation Forms (from PDF→EPUB conversion)
-    // PDF stores Arabic as isolated glyphs (U+FB50-U+FEFF), which don't connect.
-    // NFKC normalization converts them to standard Arabic (U+0600-U+06FF).
+    // Debug: analyze text encoding in EPUB content
     rendition.hooks.content.register((contents: any) => {
       const doc = contents.document
       if (!doc?.body) return
       const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
       let node: Text | null
+      let logged = false
       while ((node = walker.nextNode() as Text | null)) {
-        const original = node.nodeValue
-        if (!original) continue
-        const normalized = original.normalize('NFKC')
-        if (normalized !== original) {
+        const text = node.nodeValue
+        if (!text || text.trim().length === 0) continue
+        if (!logged) {
+          // Log first 100 chars with their Unicode codepoints
+          const sample = text.substring(0, 100)
+          const codes = Array.from(sample).map(c => 'U+' + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' ')
+          console.log('EPUB text sample:', sample)
+          console.log('EPUB Unicode codes:', codes)
+          console.log('EPUB NFKC result:', sample.normalize('NFKC'))
+          logged = true
+        }
+        // Apply NFKC normalization
+        const normalized = text.normalize('NFKC')
+        if (normalized !== text) {
           node.nodeValue = normalized
         }
       }
+      console.log('Content hook fired, logged:', logged)
     })
 
     // Set direction to RTL

@@ -231,11 +231,17 @@ async function initReader() {
       console.warn('Could not load TOC:', tocErr)
     }
 
-    // Display first - don't wait for locations
+    // Display - try saved position, fallback to beginning
     const savedLocation = localStorage.getItem(getStorageKey('location'))
-    if (savedLocation) {
-      await rendition.display(savedLocation)
-    } else {
+    try {
+      if (savedLocation) {
+        await rendition.display(savedLocation)
+      } else {
+        await rendition.display()
+      }
+    } catch (displayErr) {
+      console.warn('Saved location invalid, starting from beginning:', displayErr)
+      localStorage.removeItem(getStorageKey('location'))
       await rendition.display()
     }
     console.log('Book displayed')

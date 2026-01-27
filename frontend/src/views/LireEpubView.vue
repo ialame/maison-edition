@@ -135,20 +135,12 @@ async function initReader() {
       return
     }
 
-    const epubUrl = livreApi.getEpubUrl(livreId.value)
-    console.log('Loading EPUB from:', epubUrl)
+    // Use URL-based loading: epub.js fetches files on demand (chapter by chapter)
+    // Backend serves individual files from the EPUB ZIP at /api/livres/{id}/epub/{path}
+    const epubBaseUrl = livreApi.getEpubUrl(livreId.value) + '/'
+    console.log('Loading EPUB lazily from:', epubBaseUrl)
 
-    // Fetch EPUB as ArrayBuffer so epub.js processes it in memory
-    // (passing a URL makes epub.js try to load individual files relatively)
-    const epubResponse = await fetch(epubUrl)
-    if (!epubResponse.ok) {
-      error.value = `ملف EPUB غير متوفر (${epubResponse.status})`
-      return
-    }
-    const epubData = await epubResponse.arrayBuffer()
-    console.log('EPUB downloaded:', (epubData.byteLength / 1024 / 1024).toFixed(1), 'MB')
-
-    book = ePub(epubData)
+    book = ePub(epubBaseUrl)
 
     // Add timeout for book.ready
     await Promise.race([
@@ -174,34 +166,6 @@ async function initReader() {
       flow: 'paginated',
       spread: 'none',
       allowScriptedContent: true
-    })
-
-    // Debug: analyze text encoding in EPUB content
-    rendition.hooks.content.register((contents: any) => {
-      const doc = contents.document
-      if (!doc?.body) return
-      const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
-      let node: Text | null
-      let logged = false
-      while ((node = walker.nextNode() as Text | null)) {
-        const text = node.nodeValue
-        if (!text || text.trim().length === 0) continue
-        if (!logged) {
-          // Log first 100 chars with their Unicode codepoints
-          const sample = text.substring(0, 100)
-          const codes = Array.from(sample).map(c => 'U+' + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' ')
-          console.log('EPUB text sample:', sample)
-          console.log('EPUB Unicode codes:', codes)
-          console.log('EPUB NFKC result:', sample.normalize('NFKC'))
-          logged = true
-        }
-        // Apply NFKC normalization
-        const normalized = text.normalize('NFKC')
-        if (normalized !== text) {
-          node.nodeValue = normalized
-        }
-      }
-      console.log('Content hook fired, logged:', logged)
     })
 
     // Set direction to RTL
@@ -299,12 +263,10 @@ function handleKeyPress(e: KeyboardEvent) {
 }
 
 function nextPage() {
-  console.log('nextPage called')
   rendition?.next()
 }
 
 function prevPage() {
-  console.log('prevPage called')
   rendition?.prev()
 }
 

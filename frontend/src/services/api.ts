@@ -68,7 +68,21 @@ export const livreApi = {
     api.put<Livre>(`/livres/${id}`, livre, { params: { auteurIds, categorieId } }),
 
   delete: (id: number) =>
-    api.delete(`/livres/${id}`)
+    api.delete(`/livres/${id}`),
+
+  getEpubUrl: (id: number) =>
+    `/api/livres/${id}/epub`,
+
+  uploadEpub: (id: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<Livre>(`/livres/${id}/epub`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  deleteEpub: (id: number) =>
+    api.delete<Livre>(`/livres/${id}/epub`)
 }
 
 export const auteurApi = {

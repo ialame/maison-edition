@@ -10,31 +10,32 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix"
   },
   "dependencies": {
-    "vue": "^3.4.15",
-    "vue-router": "^4.2.5",
-    "pinia": "^2.1.7",
-    "axios": "^1.6.5",
-    "@vueuse/core": "^10.7.2",
-    "@tiptap/vue-3": "^2.2.4",
-    "@tiptap/starter-kit": "^2.2.4",
-    "@tiptap/extension-image": "^2.2.4",
-    "@tiptap/extension-text-align": "^2.2.4",
-    "@tiptap/extension-underline": "^2.2.4",
-    "@tiptap/extension-placeholder": "^2.2.4",
-    "@tiptap/extension-text-style": "^2.2.4",
     "@tiptap/extension-color": "^2.2.4",
     "@tiptap/extension-highlight": "^2.2.4",
-    "katex": "^0.16.9"
+    "@tiptap/extension-image": "^2.2.4",
+    "@tiptap/extension-placeholder": "^2.2.4",
+    "@tiptap/extension-text-align": "^2.2.4",
+    "@tiptap/extension-text-style": "^2.2.4",
+    "@tiptap/extension-underline": "^2.2.4",
+    "@tiptap/starter-kit": "^2.2.4",
+    "@tiptap/vue-3": "^2.2.4",
+    "@vueuse/core": "^10.7.2",
+    "axios": "^1.6.5",
+    "epubjs": "^0.3.93",
+    "katex": "^0.16.9",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.3",
-    "typescript": "~5.3.3",
-    "vite": "^5.0.11",
-    "vue-tsc": "^1.8.27",
-    "@types/node": "^20.11.5",
     "@types/katex": "^0.16.7",
+    "@types/node": "^20.11.5",
+    "@vitejs/plugin-vue": "^5.0.3",
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.33",
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^3.4.1",
+    "typescript": "~5.3.3",
+    "vite": "^5.0.11",
+    "vue-tsc": "^1.8.27"
   }
 }

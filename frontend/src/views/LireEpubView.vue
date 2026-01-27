@@ -162,9 +162,14 @@ async function initReader() {
       return
     }
 
+    // Calculate explicit height - epub.js needs pixel values, not percentages
+    const headerHeight = 56 // h-14
+    const footerHeight = 48
+    const availableHeight = window.innerHeight - headerHeight - footerHeight
+
     rendition = book.renderTo(readerRef.value, {
       width: '100%',
-      height: '100%',
+      height: `${availableHeight}px`,
       flow: 'paginated',
       spread: 'none',
       allowScriptedContent: true
@@ -423,14 +428,25 @@ function onGlobalKeyPress(e: KeyboardEvent) {
   handleKeyPress(e)
 }
 
+// Resize handler
+function handleResize() {
+  if (!rendition || !readerRef.value) return
+  const headerHeight = 56
+  const footerHeight = 48
+  const availableHeight = window.innerHeight - headerHeight - footerHeight
+  ;(rendition as any).resize('100%', `${availableHeight}px`)
+}
+
 onMounted(() => {
   loadSettings()
   initReader()
   document.addEventListener('keyup', onGlobalKeyPress)
+  window.addEventListener('resize', handleResize)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keyup', onGlobalKeyPress)
+  window.removeEventListener('resize', handleResize)
   if (book) {
     book.destroy()
     book = null
@@ -767,7 +783,7 @@ onBeforeUnmount(() => {
       <div
         v-show="!loading && !error"
         ref="readerRef"
-        class="flex-1"
+        class="epub-reader-container"
         @click="showControls = !showControls"
       ></div>
 
@@ -821,8 +837,9 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Ensure the reader fills available space */
-:deep(#viewer) {
-  height: 100% !important;
+.epub-reader-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 </style>

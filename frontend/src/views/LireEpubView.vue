@@ -126,6 +126,7 @@ async function initReader() {
   error.value = null
 
   try {
+    console.log('Loading book info...')
     const livreRes = await livreApi.getById(livreId.value)
     livre.value = livreRes.data
 
@@ -135,12 +136,29 @@ async function initReader() {
     }
 
     const epubUrl = livreApi.getEpubUrl(livreId.value)
+    console.log('Loading EPUB from:', epubUrl)
+
+    // First, verify the EPUB file is accessible
+    const checkResponse = await fetch(epubUrl, { method: 'HEAD' })
+    if (!checkResponse.ok) {
+      error.value = `ملف EPUB غير متوفر (${checkResponse.status})`
+      return
+    }
+    console.log('EPUB file accessible, loading with epub.js...')
 
     book = ePub(epubUrl)
 
-    await book.ready
+    // Add timeout for book.ready
+    await Promise.race([
+      book.ready,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('تجاوز مهلة تحميل الكتاب')), 30000))
+    ])
+    console.log('Book ready')
 
-    if (!readerRef.value) return
+    if (!readerRef.value) {
+      error.value = 'خطأ في تهيئة القارئ'
+      return
+    }
 
     rendition = book.renderTo(readerRef.value, {
       width: '100%',
@@ -166,39 +184,43 @@ async function initReader() {
     rendition.themes.select(theme.value)
 
     // Load TOC
-    const navigation = await book.loaded.navigation
-    tocItems.value = navigation.toc.map((item: any) => ({
-      href: item.href,
-      label: item.label?.trim() || '',
-      id: item.id || ''
-    }))
+    try {
+      const navigation = await book.loaded.navigation
+      tocItems.value = navigation.toc.map((item: any) => ({
+        href: item.href,
+        label: item.label?.trim() || '',
+        id: item.id || ''
+      }))
+    } catch (tocErr) {
+      console.warn('Could not load TOC:', tocErr)
+    }
 
-    // Generate locations for progress tracking
-    await book.locations.generate(1024)
-    totalLocations.value = book.locations.length()
-
-    // Restore last position
+    // Display first - don't wait for locations
     const savedLocation = localStorage.getItem(getStorageKey('location'))
     if (savedLocation) {
       await rendition.display(savedLocation)
     } else {
       await rendition.display()
     }
+    console.log('Book displayed')
+
+    // Generate locations in background (non-blocking)
+    book.locations.generate(1024).then(() => {
+      totalLocations.value = book!.locations.length()
+      console.log('Locations generated:', totalLocations.value)
+    }).catch((err: any) => {
+      console.warn('Could not generate locations:', err)
+    })
 
     // Track location changes
     rendition.on('relocated', (location: any) => {
-      // Save current position
       if (location.start?.cfi) {
         localStorage.setItem(getStorageKey('location'), location.start.cfi)
       }
-
-      // Update progress
       if (location.start?.location !== undefined && totalLocations.value > 0) {
         currentLocation.value = location.start.location
         progressPercent.value = Math.round((location.start.location / totalLocations.value) * 100)
       }
-
-      // Update current page display
       if (location.start?.displayed) {
         currentPage.value = `${location.start.displayed.page} / ${location.start.displayed.total}`
       }
@@ -214,14 +236,12 @@ async function initReader() {
       }
     })
 
-    // Keyboard navigation
     rendition.on('keyup', handleKeyPress)
-
     loadBookmarks()
 
   } catch (err: any) {
     console.error('خطأ في تحميل الكتاب:', err)
-    error.value = 'حدث خطأ أثناء تحميل الكتاب'
+    error.value = err.message || 'حدث خطأ أثناء تحميل الكتاب'
   } finally {
     loading.value = false
   }

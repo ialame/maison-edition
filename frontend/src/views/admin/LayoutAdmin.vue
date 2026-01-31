@@ -25,91 +25,126 @@ function isActive(to: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-secondary-100">
+  <div class="min-h-screen bg-gradient-to-br from-secondary-50 to-primary-50/30">
     <!-- Mobile sidebar backdrop -->
     <div
-      v-if="sidebarOpen"
-      class="fixed inset-0 bg-black/50 z-40 lg:hidden"
-      @click="sidebarOpen = false"
+        v-if="sidebarOpen"
+        class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+        @click="sidebarOpen = false"
     ></div>
 
     <!-- Sidebar -->
     <aside
-      :class="[
-        'fixed inset-y-0 right-0 w-64 bg-secondary-900 transform transition-transform z-50 lg:translate-x-0',
+        :class="[
+        'fixed inset-y-0 right-0 w-72 bg-gradient-to-b from-secondary-900 to-secondary-800 transform transition-all duration-300 z-50 lg:translate-x-0 shadow-2xl',
         sidebarOpen ? 'translate-x-0' : 'translate-x-full'
       ]"
     >
-      <div class="flex items-center justify-between h-16 px-6 border-b border-secondary-800">
-        <RouterLink to="/" class="text-xl font-serif font-bold text-white">
-          دار النشر
+      <!-- Logo Section -->
+      <div class="flex items-center justify-between h-20 px-6 border-b border-secondary-700/50 bg-secondary-900/50 backdrop-blur-sm">
+        <RouterLink to="/" class="flex flex-col items-end group">
+          <span class="text-2xl font-arabic font-bold text-gradient group-hover:scale-105 transition-transform">
+            دار عدلون
+          </span>
+          <span class="text-xs text-accent-400 font-medium tracking-wider">
+            لوحة التحكم
+          </span>
         </RouterLink>
-        <button @click="sidebarOpen = false" class="lg:hidden text-secondary-400 hover:text-white">
+        <button @click="sidebarOpen = false" class="lg:hidden p-2 rounded-xl text-secondary-400 hover:text-white hover:bg-secondary-700/50 transition-all">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <nav class="mt-6 px-3">
+      <!-- Navigation -->
+      <nav class="mt-8 px-4 space-y-2">
         <RouterLink
-          v-for="item in navigation"
-          :key="item.name"
-          :to="item.to"
-          :class="[
-            'flex items-center px-3 py-2 rounded-md mb-1 transition-colors',
+            v-for="item in navigation"
+            :key="item.name"
+            :to="item.to"
+            :class="[
+            'flex items-center px-4 py-3 rounded-xl mb-2 transition-all duration-200 group relative overflow-hidden',
             isActive(item.to)
-              ? 'bg-primary-700 text-white'
-              : 'text-secondary-300 hover:bg-secondary-800 hover:text-white'
+              ? 'bg-gradient-to-r from-primary-600 to-accent-600 text-white shadow-lg shadow-primary-600/25'
+              : 'text-secondary-300 hover:bg-secondary-700/50 hover:text-white'
           ]"
-          @click="sidebarOpen = false"
+            @click="sidebarOpen = false"
         >
-          <svg class="w-5 h-5 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-          </svg>
-          {{ item.name }}
+          <div :class="[
+            'w-10 h-10 rounded-lg flex items-center justify-center ml-3 transition-all',
+            isActive(item.to)
+              ? 'bg-white/20'
+              : 'bg-secondary-700/50 group-hover:bg-secondary-600/50'
+          ]">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+            </svg>
+          </div>
+          <span class="font-medium">{{ item.name }}</span>
+
+          <!-- Active indicator -->
+          <div v-if="isActive(item.to)" class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"></div>
         </RouterLink>
       </nav>
 
-      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-secondary-800">
-        <div class="flex items-center text-secondary-300 mb-3">
-          <div class="w-8 h-8 bg-secondary-700 rounded-full flex items-center justify-center ml-3">
+      <!-- User Profile Section -->
+      <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-secondary-700/50 bg-secondary-900/80 backdrop-blur-sm">
+        <div class="flex items-center mb-4 p-3 rounded-xl bg-secondary-800/50">
+          <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center ml-3 text-white font-bold text-lg">
             {{ authStore.user?.prenom?.charAt(0) }}{{ authStore.user?.nom?.charAt(0) }}
           </div>
           <div class="text-sm">
-            <p class="text-white">{{ authStore.user?.prenom }} {{ authStore.user?.nom }}</p>
-            <p class="text-secondary-400">{{ authStore.user?.role }}</p>
+            <p class="text-white font-medium">{{ authStore.user?.prenom }} {{ authStore.user?.nom }}</p>
+            <p class="text-accent-400 text-xs">{{ authStore.user?.role }}</p>
           </div>
         </div>
         <button
-          @click="authStore.logout()"
-          class="w-full text-right px-3 py-2 text-secondary-400 hover:text-white hover:bg-secondary-800 rounded-md text-sm"
+            @click="authStore.logout()"
+            class="w-full flex items-center justify-center px-4 py-3 text-secondary-300 hover:text-white hover:bg-secondary-700/50 rounded-xl text-sm transition-all group"
         >
+          <svg class="w-5 h-5 ml-2 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
           تسجيل الخروج
         </button>
       </div>
     </aside>
 
     <!-- Main content -->
-    <div class="lg:pr-64">
+    <div class="lg:pr-72">
       <!-- Top bar -->
-      <header class="bg-white shadow-sm h-16 flex items-center px-6">
-        <button @click="sidebarOpen = true" class="lg:hidden ml-4 text-secondary-600">
+      <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-primary-100/50 h-20 flex items-center px-6 sticky top-0 z-30">
+        <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-xl ml-4 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 transition-all">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-secondary-800">الإدارة</h1>
-        <div class="mr-auto">
-          <RouterLink to="/" class="text-secondary-600 hover:text-secondary-800 text-sm">
-            &larr; عرض الموقع
+
+        <div class="flex items-center">
+          <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center ml-3">
+            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold text-secondary-800">لوحة الإدارة</h1>
+        </div>
+
+        <div class="mr-auto flex items-center space-x-4 rtl:space-x-reverse">
+          <RouterLink to="/" class="btn btn-outline text-sm">
+            <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            عرض الموقع
           </RouterLink>
         </div>
       </header>
 
       <!-- Page content -->
       <main class="p-6">
-        <RouterView />
+        <div class="animate-fade-in">
+          <RouterView />
+        </div>
       </main>
     </div>
   </div>

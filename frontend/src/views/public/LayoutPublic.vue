@@ -6,7 +6,7 @@ import TheFooter from '@/components/layout/TheFooter.vue'
 <template>
   <div class="min-h-screen flex flex-col">
     <TheHeader />
-    <main class="flex-grow">
+    <main class="flex-grow pt-20">
       <RouterView />
     </main>
     <TheFooter />

@@ -1,10 +1,13 @@
 import axios from 'axios'
-import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page } from '@/types'
+import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
   headers: {
     'Content-Type': 'application/json'
+  },
+  paramsSerializer: {
+    indexes: null // Serialize arrays as key=val1&key=val2 (Spring format) instead of key[]=val1&key[]=val2
   }
 })
 
@@ -146,6 +149,63 @@ export const articleApi = {
     api.delete(`/articles/${id}`)
 }
 
+export const uploadApi = {
+  upload: (file: File, type: 'livres' | 'auteurs' | 'articles' | 'evenements') => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<{ path: string; url: string }>(`/upload/${type}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  delete: (path: string) =>
+    api.delete('/upload', { params: { path } })
+}
+
+export const chapitreApi = {
+  // Public endpoints
+  getByLivre: (livreId: number) =>
+    api.get<ChapitreList[]>(`/livres/${livreId}/chapitres`),
+
+  getGratuits: (livreId: number) =>
+    api.get<ChapitreList[]>(`/livres/${livreId}/chapitres/gratuits`),
+
+  getByNumero: (livreId: number, numero: number) =>
+    api.get<ChapitreDetail>(`/livres/${livreId}/chapitres/${numero}`),
+
+  // Admin endpoints
+  getAllAdmin: (livreId: number) =>
+    api.get<Chapitre[]>(`/admin/livres/${livreId}/chapitres`),
+
+  getById: (id: number) =>
+    api.get<Chapitre>(`/admin/chapitres/${id}`),
+
+  create: (livreId: number, chapitre: Partial<Chapitre>) =>
+    api.post<Chapitre>(`/admin/livres/${livreId}/chapitres`, chapitre),
+
+  update: (id: number, chapitre: Partial<Chapitre>) =>
+    api.put<Chapitre>(`/admin/chapitres/${id}`, chapitre),
+
+  delete: (id: number) =>
+    api.delete(`/admin/chapitres/${id}`),
+
+  reorder: (livreId: number, chapitreIds: number[]) =>
+    api.put(`/admin/livres/${livreId}/chapitres/reorder`, chapitreIds),
+
+  uploadPdf: (chapitreId: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<Chapitre>(`/admin/chapitres/${chapitreId}/pdf`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  deletePdf: (chapitreId: number) =>
+    api.delete<Chapitre>(`/admin/chapitres/${chapitreId}/pdf`),
+
+  getPdfUrl: (livreId: number, numero: number) =>
+    `/api/livres/${livreId}/chapitres/${numero}/pdf`
+}
+
 export const evenementApi = {
   getAll: () =>
     api.get<Evenement[]>('/evenements'),
@@ -170,6 +230,22 @@ export const evenementApi = {
 
   delete: (id: number) =>
     api.delete(`/evenements/${id}`)
+}
+
+export const commandeApi = {
+  checkout: (request: CheckoutRequest) =>
+    api.post<{ checkoutUrl: string }>('/commandes/checkout', request),
+
+  getBySession: (sessionId: string) =>
+    api.get<Commande>('/commandes/by-session', { params: { sessionId } }),
+
+  mesCommandes: () =>
+    api.get<Commande[]>('/commandes/mes-commandes')
+}
+
+export const latexApi = {
+  convert: (latex: string) =>
+    api.post<{ html: string }>('/admin/convert-latex', { latex })
 }
 
 export default api

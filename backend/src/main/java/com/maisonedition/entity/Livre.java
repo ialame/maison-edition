@@ -37,6 +37,15 @@ public class Livre {
     @Column(precision = 10, scale = 2)
     private BigDecimal prix;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal prixNumerique;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal prixAbonnementMensuel;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal prixAbonnementAnnuel;
+
     private Integer nombrePages;
 
     private LocalDate datePublication;
@@ -65,6 +74,10 @@ public class Livre {
     @ManyToOne
     @JoinColumn(name = "categorie_id")
     private Categorie categorie;
+
+    @OneToMany(mappedBy = "livre", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Chapitre> chapitres = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateCreation;

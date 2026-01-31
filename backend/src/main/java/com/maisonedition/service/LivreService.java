@@ -76,6 +76,9 @@ public class LivreService {
                 .resume(dto.getResume())
                 .couverture(dto.getCouverture())
                 .prix(dto.getPrix())
+                .prixNumerique(dto.getPrixNumerique())
+                .prixAbonnementMensuel(dto.getPrixAbonnementMensuel())
+                .prixAbonnementAnnuel(dto.getPrixAbonnementAnnuel())
                 .nombrePages(dto.getNombrePages())
                 .datePublication(dto.getDatePublication())
                 .langue(dto.getLangue())
@@ -108,6 +111,9 @@ public class LivreService {
         livre.setResume(dto.getResume());
         livre.setCouverture(dto.getCouverture());
         livre.setPrix(dto.getPrix());
+        livre.setPrixNumerique(dto.getPrixNumerique());
+        livre.setPrixAbonnementMensuel(dto.getPrixAbonnementMensuel());
+        livre.setPrixAbonnementAnnuel(dto.getPrixAbonnementAnnuel());
         livre.setNombrePages(dto.getNombrePages());
         livre.setDatePublication(dto.getDatePublication());
         livre.setLangue(dto.getLangue());

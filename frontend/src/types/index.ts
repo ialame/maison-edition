@@ -6,6 +6,9 @@ export interface Livre {
   resume: string | null
   couverture: string | null
   prix: number | null
+  prixNumerique: number | null
+  prixAbonnementMensuel: number | null
+  prixAbonnementAnnuel: number | null
   nombrePages: number | null
   datePublication: string | null
   langue: string | null
@@ -14,6 +17,38 @@ export interface Livre {
   enVedette: boolean
   auteurs: Auteur[]
   categorie: Categorie | null
+  chapitres?: ChapitreList[]
+}
+
+export interface Chapitre {
+  id: number
+  titre: string
+  contenu: string
+  numero: number
+  gratuit: boolean
+  publie: boolean
+  pdfPath: string | null
+  livreId: number
+  dateCreation: string
+  dateModification: string
+}
+
+export interface ChapitreList {
+  id: number
+  titre: string
+  numero: number
+  gratuit: boolean
+}
+
+export interface ChapitreDetail {
+  id: number
+  titre: string
+  contenu: string
+  numero: number
+  gratuit: boolean
+  pdfPath: string | null
+  livreId: number
+  livreTitre: string
 }
 
 export interface Auteur {
@@ -94,4 +129,34 @@ export interface Page<T> {
   number: number
   first: boolean
   last: boolean
+}
+
+export interface Commande {
+  id: number
+  livreId: number
+  livreTitre: string
+  livreCouverture: string | null
+  type: 'PAPIER' | 'NUMERIQUE' | 'ABONNEMENT_MENSUEL' | 'ABONNEMENT_ANNUEL'
+  statut: 'EN_ATTENTE' | 'PAYEE' | 'EN_PREPARATION' | 'EXPEDIEE' | 'LIVREE' | 'ANNULEE' | 'REMBOURSEE'
+  montant: number
+  nomComplet: string | null
+  adresse: string | null
+  ville: string | null
+  codePostal: string | null
+  pays: string | null
+  telephone: string | null
+  dateDebutAcces: string | null
+  dateFinAcces: string | null
+  dateCommande: string
+}
+
+export interface CheckoutRequest {
+  livreId: number
+  type: string
+  nomComplet?: string
+  adresse?: string
+  ville?: string
+  codePostal?: string
+  pays?: string
+  telephone?: string
 }

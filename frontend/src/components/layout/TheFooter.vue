@@ -10,10 +10,10 @@ const currentYear = new Date().getFullYear()
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- About -->
         <div class="col-span-1 md:col-span-2">
-          <h3 class="text-xl font-serif font-bold mb-4">دار النشر</h3>
+          <img src="/assets/dar-adloun-logo-light.svg" alt="دار عدلون" class="h-20 mb-4" />
           <p class="text-secondary-300 mb-4">
-            منذ أكثر من 50 عامًا، ننشر كتبًا عالية الجودة تُلهم قراءنا وتُثقفهم
-            وتُمتعهم في جميع أنحاء العالم العربي.
+            دار عدلون للنشر والتوزيع - نقدم لكم أفضل الكتب والإصدارات
+            في مختلف المجالات الأدبية والعلمية والثقافية.
           </p>
         </div>
 
@@ -57,7 +57,7 @@ const currentYear = new Date().getFullYear()
       </div>
 
       <div class="border-t border-secondary-700 mt-8 pt-8 text-center text-secondary-400">
-        <p>&copy; {{ currentYear }} دار النشر. جميع الحقوق محفوظة.</p>
+        <p>&copy; {{ currentYear }} دار عدلون للنشر والتوزيع. جميع الحقوق محفوظة.</p>
       </div>
     </div>
   </footer>

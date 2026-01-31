@@ -166,3 +166,21 @@ VALUES (
 ## Licence
 
 Projet privé - Tous droits réservés.
+
+
+Pour récupérer mes modifications en local, exécutez ces commandes :
+
+# 1. Récupérer les dernières modifications de la branche
+git fetch origin claude/publishing-house-website-HmN8S
+
+# 2. Fusionner dans votre branche actuelle
+git merge origin/claude/publishing-house-website-HmN8S
+
+# Ou en une seule commande :
+
+git pull origin claude/publishing-house-website-HmN8S
+
+# Si vous êtes sur une autre branche (comme main) et voulez basculer sur ma branche :
+
+git checkout claude/publishing-house-website-HmN8S
+git pull

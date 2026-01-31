@@ -24,6 +24,21 @@ const router = createRouter({
           component: () => import('@/views/public/LivreDetailView.vue')
         },
         {
+          path: 'livres/:livreId/lire/:numero',
+          name: 'lire-chapitre',
+          component: () => import('@/views/LireChapitreView.vue')
+        },
+        {
+          path: 'livres/:id/commander',
+          name: 'commander-livre',
+          component: () => import('@/views/public/CommanderLivreView.vue')
+        },
+        {
+          path: 'commande/succes',
+          name: 'commande-succes',
+          component: () => import('@/views/public/CommandeSuccesView.vue')
+        },
+        {
           path: 'auteurs',
           name: 'auteurs',
           component: () => import('@/views/public/AuteursView.vue')
@@ -66,6 +81,11 @@ const router = createRouter({
       component: () => import('@/views/public/LoginView.vue')
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/public/RegisterView.vue')
+    },
+    {
       path: '/admin',
       component: () => import('@/views/admin/LayoutAdmin.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
@@ -79,6 +99,11 @@ const router = createRouter({
           path: 'livres',
           name: 'admin-livres',
           component: () => import('@/views/admin/LivresAdminView.vue')
+        },
+        {
+          path: 'livres/:livreId/chapitres',
+          name: 'admin-chapitres',
+          component: () => import('@/views/admin/ChapitresAdminView.vue')
         },
         {
           path: 'auteurs',

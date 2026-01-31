@@ -20,6 +20,9 @@ public class LivreDTO {
     private String resume;
     private String couverture;
     private BigDecimal prix;
+    private BigDecimal prixNumerique;
+    private BigDecimal prixAbonnementMensuel;
+    private BigDecimal prixAbonnementAnnuel;
     private Integer nombrePages;
     private LocalDate datePublication;
     private String langue;
@@ -38,6 +41,9 @@ public class LivreDTO {
                 .resume(livre.getResume())
                 .couverture(livre.getCouverture())
                 .prix(livre.getPrix())
+                .prixNumerique(livre.getPrixNumerique())
+                .prixAbonnementMensuel(livre.getPrixAbonnementMensuel())
+                .prixAbonnementAnnuel(livre.getPrixAbonnementAnnuel())
                 .nombrePages(livre.getNombrePages())
                 .datePublication(livre.getDatePublication())
                 .langue(livre.getLangue())

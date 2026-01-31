@@ -54,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        // Stripe webhook (must be public, no JWT)
+                        .requestMatchers(HttpMethod.POST, "/api/commandes/stripe-webhook").permitAll()
                         // Endpoints admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // Tout le reste nécessite une authentification

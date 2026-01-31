@@ -19,7 +19,7 @@ async function loadData() {
     const response = await articleApi.getAll()
     articles.value = response.data
   } catch (error) {
-    console.error('Erreur lors du chargement:', error)
+    console.error('خطأ في التحميل:', error)
   } finally {
     loading.value = false
   }
@@ -61,7 +61,7 @@ async function saveForm() {
     showModal.value = false
     await loadData()
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
+    console.error('خطأ في الحفظ:', error)
   }
 }
 
@@ -70,7 +70,7 @@ async function publierArticle(id: number) {
     await articleApi.publier(id)
     await loadData()
   } catch (error) {
-    console.error('Erreur lors de la publication:', error)
+    console.error('خطأ في النشر:', error)
   }
 }
 
@@ -79,24 +79,24 @@ async function archiverArticle(id: number) {
     await articleApi.archiver(id)
     await loadData()
   } catch (error) {
-    console.error('Erreur lors de l\'archivage:', error)
+    console.error('خطأ في الأرشفة:', error)
   }
 }
 
 async function deleteArticle(id: number) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
+  if (confirm('هل أنت متأكد من حذف هذا المقال؟')) {
     try {
       await articleApi.delete(id)
       await loadData()
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
+      console.error('خطأ في الحذف:', error)
     }
   }
 }
 
 function formatDate(date: string | null) {
   if (!date) return '-'
-  return new Date(date).toLocaleDateString('fr-FR')
+  return new Date(date).toLocaleDateString('ar-SA')
 }
 
 onMounted(loadData)
@@ -105,9 +105,9 @@ onMounted(loadData)
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-secondary-800">Gestion des articles</h2>
+      <h2 class="text-2xl font-bold text-secondary-800">إدارة المقالات</h2>
       <button @click="openModal()" class="btn btn-primary">
-        + Écrire un article
+        + كتابة مقال
       </button>
     </div>
 
@@ -119,10 +119,10 @@ onMounted(loadData)
       <table class="min-w-full divide-y divide-secondary-200">
         <thead class="bg-secondary-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Titre</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Statut</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Date</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">العنوان</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الحالة</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">التاريخ</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">الإجراءات</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-secondary-200">
@@ -138,33 +138,38 @@ onMounted(loadData)
                 article.statut === 'BROUILLON' ? 'bg-yellow-100 text-yellow-800' :
                 'bg-secondary-100 text-secondary-800'
               ]">
-                {{ article.statut === 'PUBLIE' ? 'Publié' : article.statut === 'BROUILLON' ? 'Brouillon' : 'Archivé' }}
+                {{ article.statut === 'PUBLIE' ? 'منشور' : article.statut === 'BROUILLON' ? 'مسودة' : 'مؤرشف' }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
               {{ formatDate(article.datePublication || article.dateCreation) }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
-              <button @click="openModal(article)" class="text-primary-600 hover:text-primary-800">
-                Modifier
+            <td class="px-6 py-4 whitespace-nowrap text-left text-sm">
+              <button @click="openModal(article)" class="text-primary-600 hover:text-primary-800 ml-2">
+                تعديل
               </button>
               <button
                 v-if="article.statut === 'BROUILLON'"
                 @click="publierArticle(article.id)"
-                class="text-green-600 hover:text-green-800"
+                class="text-green-600 hover:text-green-800 ml-2"
               >
-                Publier
+                نشر
               </button>
               <button
                 v-if="article.statut === 'PUBLIE'"
                 @click="archiverArticle(article.id)"
-                class="text-yellow-600 hover:text-yellow-800"
+                class="text-yellow-600 hover:text-yellow-800 ml-2"
               >
-                Archiver
+                أرشفة
               </button>
               <button @click="deleteArticle(article.id)" class="text-red-600 hover:text-red-800">
-                Supprimer
+                حذف
               </button>
+            </td>
+          </tr>
+          <tr v-if="articles.length === 0">
+            <td colspan="4" class="px-6 py-12 text-center text-secondary-500">
+              لا توجد مقالات. اكتب مقالك الأول!
             </td>
           </tr>
         </tbody>
@@ -176,28 +181,29 @@ onMounted(loadData)
       <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b">
           <h3 class="text-lg font-semibold text-secondary-800">
-            {{ editingArticle ? 'Modifier l\'article' : 'Écrire un article' }}
+            {{ editingArticle ? 'تعديل المقال' : 'كتابة مقال جديد' }}
           </h3>
         </div>
         <form @submit.prevent="saveForm" class="p-6 space-y-4">
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Titre *</label>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">العنوان *</label>
             <input v-model="form.titre" type="text" required class="input" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Chapeau</label>
-            <textarea v-model="form.chapeau" rows="2" class="input" placeholder="Résumé de l'article..."></textarea>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">المقدمة</label>
+            <textarea v-model="form.chapeau" rows="2" class="input" placeholder="ملخص قصير للمقال..."></textarea>
           </div>
           <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Contenu *</label>
-            <textarea v-model="form.contenu" rows="12" required class="input font-mono"></textarea>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">المحتوى *</label>
+            <textarea v-model="form.contenu" rows="12" required class="input"></textarea>
+            <p class="text-xs text-secondary-500 mt-1">يمكنك استخدام HTML للتنسيق</p>
           </div>
-          <div class="flex justify-end space-x-3 pt-4">
+          <div class="flex justify-end gap-3 pt-4">
             <button type="button" @click="showModal = false" class="btn btn-secondary">
-              Annuler
+              إلغاء
             </button>
             <button type="submit" class="btn btn-primary">
-              {{ editingArticle ? 'Enregistrer' : 'Créer le brouillon' }}
+              {{ editingArticle ? 'حفظ التعديلات' : 'حفظ كمسودة' }}
             </button>
           </div>
         </form>

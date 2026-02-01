@@ -36,8 +36,8 @@ onMounted(() => {
   <div class="py-12">
     <div class="container-custom">
       <div class="mb-8">
-        <h1 class="text-4xl font-serif font-bold text-secondary-800 mb-4">Actualités</h1>
-        <p class="text-secondary-600">Les dernières nouvelles du monde littéraire</p>
+        <h1 class="text-4xl font-serif font-bold text-secondary-800 mb-4">المدونة</h1>
+        <p class="text-secondary-600">آخر الأخبار والمقالات من عالم الأدب والنشر</p>
       </div>
 
       <div v-if="loading" class="flex justify-center py-12">
@@ -46,7 +46,7 @@ onMounted(() => {
 
       <template v-else>
         <div v-if="articles.length === 0" class="text-center py-12">
-          <p class="text-secondary-500">Aucun article pour le moment.</p>
+          <p class="text-secondary-500">لا توجد مقالات حالياً.</p>
         </div>
 
         <div v-else>
@@ -58,21 +58,21 @@ onMounted(() => {
           <div v-if="page && page.totalPages > 1" class="mt-8 flex justify-center">
             <nav class="flex items-center space-x-2">
               <button
-                @click="goToPage(currentPage - 1)"
-                :disabled="page.first"
-                class="px-3 py-2 rounded-md border border-secondary-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-100"
-              >
-                Précédent
-              </button>
-              <span class="px-4 py-2 text-secondary-600">
-                Page {{ currentPage + 1 }} sur {{ page.totalPages }}
-              </span>
-              <button
                 @click="goToPage(currentPage + 1)"
                 :disabled="page.last"
                 class="px-3 py-2 rounded-md border border-secondary-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-100"
               >
-                Suivant
+                التالي
+              </button>
+              <span class="px-4 py-2 text-secondary-600">
+                صفحة {{ currentPage + 1 }} من {{ page.totalPages }}
+              </span>
+              <button
+                @click="goToPage(currentPage - 1)"
+                :disabled="page.first"
+                class="px-3 py-2 rounded-md border border-secondary-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-100"
+              >
+                السابق
               </button>
             </nav>
           </div>

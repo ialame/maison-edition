@@ -10,7 +10,7 @@ const loading = ref(true)
 
 const formattedDate = computed(() => {
   if (!article.value?.datePublication) return ''
-  return new Date(article.value.datePublication).toLocaleDateString('fr-FR', {
+  return new Date(article.value.datePublication).toLocaleDateString('ar-SA', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -39,7 +39,7 @@ onMounted(async () => {
 
       <article v-else-if="article" class="max-w-3xl mx-auto">
         <nav class="text-sm text-secondary-500 mb-8">
-          <RouterLink to="/blog" class="hover:text-primary-700">Blog</RouterLink>
+          <RouterLink to="/blog" class="hover:text-primary-700">المدونة</RouterLink>
           <span class="mx-2">/</span>
           <span>{{ article.titre }}</span>
         </nav>
@@ -48,9 +48,9 @@ onMounted(async () => {
           <h1 class="text-4xl font-serif font-bold text-secondary-800 mb-4">
             {{ article.titre }}
           </h1>
-          <div class="flex items-center text-secondary-500 text-sm space-x-4">
+          <div class="flex items-center text-secondary-500 text-sm gap-4">
             <span>{{ formattedDate }}</span>
-            <span v-if="article.auteurNom">par {{ article.auteurNom }}</span>
+            <span v-if="article.auteurNom">بقلم {{ article.auteurNom }}</span>
           </div>
         </header>
 
@@ -70,15 +70,15 @@ onMounted(async () => {
 
         <div class="mt-12 pt-8 border-t">
           <RouterLink to="/blog" class="text-primary-700 hover:text-primary-800 font-medium">
-            &larr; Retour aux actualités
+            العودة إلى المدونة ←
           </RouterLink>
         </div>
       </article>
 
       <div v-else class="text-center py-12">
-        <p class="text-secondary-500">Article non trouvé.</p>
+        <p class="text-secondary-500">المقال غير موجود.</p>
         <RouterLink to="/blog" class="text-primary-700 hover:text-primary-800 mt-4 inline-block">
-          Retour au blog
+          العودة إلى المدونة
         </RouterLink>
       </div>
     </div>

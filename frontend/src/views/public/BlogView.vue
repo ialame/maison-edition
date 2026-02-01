@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { articleApi, tagApi } from '@/services/api'
 import type { Article, Page, Tag } from '@/types'
 import ArticleCard from '@/components/article/ArticleCard.vue'
+import NewsletterForm from '@/components/NewsletterForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -222,6 +223,11 @@ onMounted(async () => {
           </div>
         </div>
       </template>
+
+      <!-- Newsletter -->
+      <div class="mt-12">
+        <NewsletterForm />
+      </div>
     </div>
   </div>
 </template>

@@ -55,6 +55,13 @@ public class ArticleService {
                 .orElseThrow(() -> new RuntimeException("Article non trouvé avec le slug: " + slug));
     }
 
+    public ArticleDTO findBySlugAndIncrementVues(String slug) {
+        Article article = articleRepository.findBySlug(slug)
+                .orElseThrow(() -> new RuntimeException("Article non trouvé avec le slug: " + slug));
+        article.setNombreVues(article.getNombreVues() + 1);
+        return ArticleDTO.fromEntity(articleRepository.save(article));
+    }
+
     public ArticleDTO create(ArticleDTO dto, Long auteurId) {
         Article article = Article.builder()
                 .titre(dto.getTitre())

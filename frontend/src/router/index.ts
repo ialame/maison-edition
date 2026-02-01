@@ -156,6 +156,16 @@ const router = createRouter({
           path: 'contacts',
           name: 'admin-contacts',
           component: () => import('@/views/admin/ContactsAdminView.vue')
+        },
+        {
+          path: 'newsletter',
+          name: 'admin-newsletter',
+          component: () => import('@/views/admin/NewsletterAdminView.vue')
+        },
+        {
+          path: 'commentaires',
+          name: 'admin-commentaires',
+          component: () => import('@/views/admin/CommentairesAdminView.vue')
         }
       ]
     }

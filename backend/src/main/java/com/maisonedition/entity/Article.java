@@ -59,6 +59,9 @@ public class Article {
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
+    @Builder.Default
+    private Long nombreVues = 0L;
+
     @PrePersist
     protected void onCreate() {
         dateCreation = LocalDateTime.now();

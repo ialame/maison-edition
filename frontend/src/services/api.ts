@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest, Utilisateur, AdresseData, Tag } from '@/types'
+import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest, Utilisateur, AdresseData, Tag, Commentaire } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -298,6 +298,57 @@ export const profilApi = {
 
   changePassword: (data: { motDePasseActuel: string; nouveauMotDePasse: string }) =>
     api.put<{ message: string }>('/profil/mot-de-passe', data)
+}
+
+export interface NewsletterAbonne {
+  id: number
+  email: string
+  actif: boolean
+  dateInscription: string
+  dateDesinscription: string | null
+}
+
+export const newsletterApi = {
+  subscribe: (email: string) =>
+    api.post<{ message: string }>('/newsletter/subscribe', { email }),
+
+  unsubscribe: (email: string) =>
+    api.post<{ message: string }>('/newsletter/unsubscribe', { email }),
+
+  getAll: () =>
+    api.get<NewsletterAbonne[]>('/newsletter/admin/abonnes'),
+
+  getActifs: () =>
+    api.get<NewsletterAbonne[]>('/newsletter/admin/abonnes/actifs'),
+
+  getStats: () =>
+    api.get<{ total: number; actifs: number }>('/newsletter/admin/stats'),
+
+  delete: (id: number) =>
+    api.delete(`/newsletter/admin/abonnes/${id}`)
+}
+
+export const commentaireApi = {
+  getByArticle: (articleId: number) =>
+    api.get<Commentaire[]>(`/commentaires/article/${articleId}`),
+
+  add: (articleId: number, data: { contenu: string; nomAuteur?: string; email?: string }) =>
+    api.post<{ message: string; commentaire: Commentaire }>(`/commentaires/article/${articleId}`, data),
+
+  getAll: () =>
+    api.get<Commentaire[]>('/commentaires/admin'),
+
+  getPending: () =>
+    api.get<Commentaire[]>('/commentaires/admin/pending'),
+
+  approve: (id: number) =>
+    api.put<{ message: string }>(`/commentaires/admin/${id}/approuver`),
+
+  delete: (id: number) =>
+    api.delete(`/commentaires/admin/${id}`),
+
+  getStats: () =>
+    api.get<{ total: number; enAttente: number }>('/commentaires/admin/stats')
 }
 
 export default api

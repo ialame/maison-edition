@@ -49,7 +49,11 @@ public class ArticleController {
     }
 
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<ArticleDTO> findBySlug(@PathVariable String slug) {
+    public ResponseEntity<ArticleDTO> findBySlug(@PathVariable String slug,
+            @RequestParam(defaultValue = "true") boolean incrementVues) {
+        if (incrementVues) {
+            return ResponseEntity.ok(articleService.findBySlugAndIncrementVues(slug));
+        }
         return ResponseEntity.ok(articleService.findBySlug(slug));
     }
 

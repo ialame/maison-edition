@@ -93,6 +93,8 @@ export interface Article {
   dateCreation: string
   tags?: Tag[]
   tagIds?: number[]
+  tempsLecture?: number
+  nombreVues?: number
 }
 
 export interface Evenement {
@@ -180,4 +182,14 @@ export interface CheckoutRequest {
   codePostal?: string
   pays?: string
   telephone?: string
+}
+
+export interface Commentaire {
+  id: number
+  contenu: string
+  nomAuteur: string
+  articleId: number
+  articleTitre?: string
+  approuve: boolean
+  dateCreation: string
 }

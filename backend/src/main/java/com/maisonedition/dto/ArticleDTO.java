@@ -25,6 +25,20 @@ public class ArticleDTO {
     private LocalDateTime dateCreation;
     private List<TagDTO> tags;
     private List<Long> tagIds;
+    private Integer tempsLecture; // in minutes
+    private Long nombreVues;
+
+    private static int calculerTempsLecture(String contenu) {
+        if (contenu == null || contenu.isEmpty()) return 1;
+        // Remove HTML tags
+        String texte = contenu.replaceAll("<[^>]*>", " ");
+        // Count words (split by whitespace)
+        String[] mots = texte.trim().split("\\s+");
+        int nombreMots = mots.length;
+        // Arabic reading speed: ~180 words/minute
+        int minutes = (int) Math.ceil(nombreMots / 180.0);
+        return Math.max(1, minutes);
+    }
 
     public static ArticleDTO fromEntity(Article article) {
         return ArticleDTO.builder()
@@ -42,6 +56,8 @@ public class ArticleDTO {
                 .dateCreation(article.getDateCreation())
                 .tags(article.getTags() != null ?
                         article.getTags().stream().map(TagDTO::fromEntity).collect(Collectors.toList()) : null)
+                .tempsLecture(calculerTempsLecture(article.getContenu()))
+                .nombreVues(article.getNombreVues())
                 .build();
     }
 }

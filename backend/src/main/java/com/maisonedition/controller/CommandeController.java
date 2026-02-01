@@ -110,11 +110,20 @@ public class CommandeController {
 
     private String extractJsonField(String json, String field) {
         try {
-            String pattern = "\"" + field + "\":\\s*\"([^\"]+)\"";
-            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-            java.util.regex.Matcher m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1);
+            if ("id".equals(field)) {
+                // For session ID, look specifically for cs_test_ or cs_live_ pattern
+                java.util.regex.Pattern p = java.util.regex.Pattern.compile("\"id\":\\s*\"(cs_(?:test|live)_[^\"]+)\"");
+                java.util.regex.Matcher m = p.matcher(json);
+                if (m.find()) {
+                    return m.group(1);
+                }
+            } else {
+                String pattern = "\"" + field + "\":\\s*\"([^\"]+)\"";
+                java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+                java.util.regex.Matcher m = p.matcher(json);
+                if (m.find()) {
+                    return m.group(1);
+                }
             }
         } catch (Exception e) {
             log.warn("Failed to extract field {} from JSON", field);

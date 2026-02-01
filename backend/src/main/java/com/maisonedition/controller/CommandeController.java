@@ -69,16 +69,32 @@ public class CommandeController {
             log.info("Webhook event type: {}", event.getType());
 
             if ("checkout.session.completed".equals(event.getType())) {
+                // Try standard deserialization first
                 Session session = (Session) event.getDataObjectDeserializer()
                         .getObject().orElse(null);
-                log.info("Session deserialized: {}", session != null);
+
                 if (session != null) {
                     log.info("Processing payment for session: {}, paymentIntent: {}",
                             session.getId(), session.getPaymentIntent());
                     commandeService.markAsPaid(session.getId(), session.getPaymentIntent());
                     log.info("Payment confirmed for session: {}", session.getId());
                 } else {
-                    log.warn("Session is null after deserialization");
+                    // Fallback: extract data from raw JSON
+                    log.info("Session null, using raw JSON extraction");
+                    com.stripe.model.StripeObject rawObject = event.getData().getObject();
+                    if (rawObject != null) {
+                        String sessionId = rawObject.toJson().contains("\"id\"")
+                            ? extractJsonField(payload, "id") : null;
+                        String paymentIntent = extractJsonField(payload, "payment_intent");
+
+                        if (sessionId != null && sessionId.startsWith("cs_")) {
+                            log.info("Extracted sessionId: {}, paymentIntent: {}", sessionId, paymentIntent);
+                            commandeService.markAsPaid(sessionId, paymentIntent);
+                            log.info("Payment confirmed for session: {}", sessionId);
+                        } else {
+                            log.warn("Could not extract session ID from payload");
+                        }
+                    }
                 }
             }
 
@@ -90,5 +106,19 @@ public class CommandeController {
             log.error("Error processing webhook: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body("Error");
         }
+    }
+
+    private String extractJsonField(String json, String field) {
+        try {
+            String pattern = "\"" + field + "\":\\s*\"([^\"]+)\"";
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+            java.util.regex.Matcher m = p.matcher(json);
+            if (m.find()) {
+                return m.group(1);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract field {} from JSON", field);
+        }
+        return null;
     }
 }

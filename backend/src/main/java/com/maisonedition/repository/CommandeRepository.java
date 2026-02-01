@@ -54,4 +54,15 @@ public interface CommandeRepository extends JpaRepository<Commande, Long> {
            "AND c.dateFinAcces >= :today")
     boolean hasAbonnementGlobalActif(@Param("utilisateurId") Long utilisateurId,
                                       @Param("today") LocalDate today);
+
+    /**
+     * Find existing pending order for the same item/type to avoid duplicates
+     */
+    @Query("SELECT c FROM Commande c WHERE c.utilisateur.id = :utilisateurId " +
+           "AND c.statut = 'EN_ATTENTE' " +
+           "AND c.type = :type " +
+           "AND ((:livreId IS NULL AND c.livre IS NULL) OR c.livre.id = :livreId)")
+    Optional<Commande> findPendingOrder(@Param("utilisateurId") Long utilisateurId,
+                                        @Param("livreId") Long livreId,
+                                        @Param("type") TypeCommande type);
 }

@@ -8,19 +8,24 @@ const commandes = ref<Commande[]>([])
 const loading = ref(true)
 const error = ref('')
 
+// Only show non-pending orders (paid, shipped, etc.)
+const paidCommandes = computed(() =>
+  commandes.value.filter(c => c.statut !== 'EN_ATTENTE')
+)
+
 // Achats permanents (papier + PDF)
 const achats = computed(() =>
-  commandes.value.filter(c => c.type === 'PAPIER' || c.type === 'NUMERIQUE')
+  paidCommandes.value.filter(c => c.type === 'PAPIER' || c.type === 'NUMERIQUE')
 )
 
 // Abonnements par livre (LECTURE_LIVRE)
 const abonnementsLivre = computed(() =>
-  commandes.value.filter(c => c.type === 'LECTURE_LIVRE')
+  paidCommandes.value.filter(c => c.type === 'LECTURE_LIVRE')
 )
 
 // Abonnements globaux (tous les livres)
 const abonnementsGlobaux = computed(() =>
-  commandes.value.filter(c => c.type === 'ABONNEMENT_MENSUEL' || c.type === 'ABONNEMENT_ANNUEL')
+  paidCommandes.value.filter(c => c.type === 'ABONNEMENT_MENSUEL' || c.type === 'ABONNEMENT_ANNUEL')
 )
 
 function getTypeLabel(type: string): string {
@@ -102,7 +107,7 @@ onMounted(async () => {
       </div>
 
       <!-- No orders -->
-      <div v-else-if="commandes.length === 0" class="text-center py-12">
+      <div v-else-if="paidCommandes.length === 0" class="text-center py-12">
         <svg class="w-16 h-16 mx-auto text-secondary-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
         </svg>
@@ -113,7 +118,7 @@ onMounted(async () => {
       </div>
 
       <!-- Orders list -->
-      <div v-else class="space-y-8">
+      <div v-else-if="paidCommandes.length > 0" class="space-y-8">
         <!-- Global Subscriptions -->
         <div v-if="abonnementsGlobaux.length > 0">
           <h2 class="text-xl font-semibold text-secondary-800 mb-4 flex items-center">

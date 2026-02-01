@@ -32,9 +32,30 @@ public class CommandeService {
 
         // Global subscriptions don't need a book
         Livre livre = null;
+        Long livreId = null;
         if (type != TypeCommande.ABONNEMENT_MENSUEL && type != TypeCommande.ABONNEMENT_ANNUEL) {
             livre = livreRepository.findById(request.getLivreId())
                     .orElseThrow(() -> new RuntimeException("Livre non trouvé"));
+            livreId = livre.getId();
+        }
+
+        // Check for existing pending order for the same item/type and reuse it
+        Commande existingPending = commandeRepository
+                .findPendingOrder(utilisateur.getId(), livreId, type)
+                .orElse(null);
+
+        if (existingPending != null) {
+            // Update shipping info if this is a paper order
+            if (type == TypeCommande.PAPIER) {
+                existingPending.setNomComplet(request.getNomComplet());
+                existingPending.setAdresse(request.getAdresse());
+                existingPending.setVille(request.getVille());
+                existingPending.setCodePostal(request.getCodePostal());
+                existingPending.setPays(request.getPays());
+                existingPending.setTelephone(request.getTelephone());
+                return commandeRepository.save(existingPending);
+            }
+            return existingPending;
         }
 
         BigDecimal montant = calculateMontant(livre, type);

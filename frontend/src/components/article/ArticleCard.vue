@@ -31,7 +31,7 @@ const statusColor = computed(() => {
     <div class="relative aspect-video bg-gradient-to-br from-secondary-100 to-primary-50 overflow-hidden rounded-t-2xl">
       <img
           v-if="article.imagePrincipale"
-          :src="article.imagePrincipale"
+          :src="`/uploads/${article.imagePrincipale}`"
           :alt="article.titre"
           class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
       />

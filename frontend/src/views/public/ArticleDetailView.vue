@@ -56,7 +56,7 @@ onMounted(async () => {
 
         <div v-if="article.imagePrincipale" class="mb-8 rounded-lg overflow-hidden">
           <img
-            :src="article.imagePrincipale"
+            :src="`/uploads/${article.imagePrincipale}`"
             :alt="article.titre"
             class="w-full h-auto"
           />

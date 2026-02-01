@@ -51,7 +51,7 @@ public class Article {
         dateCreation = LocalDateTime.now();
         dateModification = LocalDateTime.now();
         if (slug == null || slug.isEmpty()) {
-            slug = titre.toLowerCase()
+            String generatedSlug = titre.toLowerCase()
                 .replaceAll("[àáâãäå]", "a")
                 .replaceAll("[èéêë]", "e")
                 .replaceAll("[ìíîï]", "i")
@@ -60,6 +60,13 @@ public class Article {
                 .replaceAll("[ç]", "c")
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
+
+            // If slug is empty (e.g., Arabic title), use timestamp-based slug
+            if (generatedSlug.isEmpty()) {
+                slug = "article-" + System.currentTimeMillis();
+            } else {
+                slug = generatedSlug;
+            }
         }
     }
 

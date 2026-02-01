@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import api from '@/services/api'
 
 const form = ref({
   nom: '',
@@ -9,10 +10,21 @@ const form = ref({
 })
 
 const submitted = ref(false)
+const loading = ref(false)
+const error = ref('')
 
-function submitForm() {
-  // TODO: Implement form submission
-  submitted.value = true
+async function submitForm() {
+  loading.value = true
+  error.value = ''
+
+  try {
+    await api.post('/contacts', form.value)
+    submitted.value = true
+  } catch (e: any) {
+    error.value = e.response?.data?.error || 'حدث خطأ أثناء إرسال الرسالة'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -65,6 +77,9 @@ function submitForm() {
             </div>
 
             <form v-else @submit.prevent="submitForm" class="space-y-6">
+              <div v-if="error" class="p-4 bg-red-50 text-red-700 rounded-lg">
+                {{ error }}
+              </div>
               <div class="grid md:grid-cols-2 gap-6">
                 <div>
                   <label for="nom" class="block text-sm font-medium text-secondary-700 mb-1">الاسم</label>
@@ -108,7 +123,8 @@ function submitForm() {
                   class="input"
                 ></textarea>
               </div>
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" :disabled="loading" class="btn btn-primary">
+                <span v-if="loading" class="inline-block animate-spin mr-2">⟳</span>
                 إرسال الرسالة
               </button>
             </form>

@@ -141,6 +141,21 @@ const router = createRouter({
           path: 'evenements',
           name: 'admin-evenements',
           component: () => import('@/views/admin/EvenementsAdminView.vue')
+        },
+        {
+          path: 'utilisateurs',
+          name: 'admin-utilisateurs',
+          component: () => import('@/views/admin/UtilisateursAdminView.vue')
+        },
+        {
+          path: 'commandes',
+          name: 'admin-commandes',
+          component: () => import('@/views/admin/CommandesAdminView.vue')
+        },
+        {
+          path: 'contacts',
+          name: 'admin-contacts',
+          component: () => import('@/views/admin/ContactsAdminView.vue')
         }
       ]
     }

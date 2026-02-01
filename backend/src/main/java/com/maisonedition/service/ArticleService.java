@@ -2,8 +2,10 @@ package com.maisonedition.service;
 
 import com.maisonedition.dto.ArticleDTO;
 import com.maisonedition.entity.Article;
+import com.maisonedition.entity.Tag;
 import com.maisonedition.entity.Utilisateur;
 import com.maisonedition.repository.ArticleRepository;
+import com.maisonedition.repository.TagRepository;
 import com.maisonedition.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final TagRepository tagRepository;
 
     public List<ArticleDTO> findAll() {
         return articleRepository.findAll().stream()
@@ -68,6 +71,11 @@ public class ArticleService {
             article.setAuteur(auteur);
         }
 
+        if (dto.getTagIds() != null && !dto.getTagIds().isEmpty()) {
+            List<Tag> tags = tagRepository.findAllById(dto.getTagIds());
+            article.setTags(new java.util.HashSet<>(tags));
+        }
+
         return ArticleDTO.fromEntity(articleRepository.save(article));
     }
 
@@ -80,6 +88,11 @@ public class ArticleService {
         article.setChapeau(dto.getChapeau());
         article.setContenu(dto.getContenu());
         article.setImagePrincipale(dto.getImagePrincipale());
+
+        if (dto.getTagIds() != null) {
+            List<Tag> tags = tagRepository.findAllById(dto.getTagIds());
+            article.setTags(new java.util.HashSet<>(tags));
+        }
 
         return ArticleDTO.fromEntity(articleRepository.save(article));
     }
@@ -105,5 +118,23 @@ public class ArticleService {
 
     public void delete(Long id) {
         articleRepository.deleteById(id);
+    }
+
+    public Page<ArticleDTO> findByTag(String tagSlug, Pageable pageable) {
+        return articleRepository.findByTagSlugAndStatut(tagSlug, Article.Statut.PUBLIE, pageable)
+                .map(ArticleDTO::fromEntity);
+    }
+
+    public Page<ArticleDTO> search(String query, Pageable pageable) {
+        return articleRepository.searchByTitreOrChapeau(query, Article.Statut.PUBLIE, pageable)
+                .map(ArticleDTO::fromEntity);
+    }
+
+    public List<ArticleDTO> findRelated(Long articleId, int limit) {
+        return articleRepository.findRelatedArticles(articleId, Article.Statut.PUBLIE,
+                org.springframework.data.domain.PageRequest.of(0, limit))
+                .stream()
+                .map(ArticleDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 }

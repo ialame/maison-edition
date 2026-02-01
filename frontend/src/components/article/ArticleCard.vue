@@ -16,14 +16,6 @@ const formattedDate = computed(() => {
   })
 })
 
-const statusColor = computed(() => {
-  switch (props.article.statut) {
-    case 'PUBLIE': return 'bg-green-100 text-green-800'
-    case 'BROUILLON': return 'bg-yellow-100 text-yellow-800'
-    case 'ARCHIVE': return 'bg-secondary-100 text-secondary-800'
-    default: return 'bg-secondary-100 text-secondary-800'
-  }
-})
 </script>
 
 <template>
@@ -41,13 +33,6 @@ const statusColor = computed(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
           </svg>
         </div>
-      </div>
-
-      <!-- Status Badge -->
-      <div class="absolute top-4 right-4">
-        <span :class="['px-3 py-1 text-xs font-medium rounded-full shadow-sm', statusColor]">
-          {{ article.statut === 'PUBLIE' ? 'منشور' : article.statut === 'BROUILLON' ? 'مسودة' : 'مؤرشف' }}
-        </span>
       </div>
 
       <!-- Overlay on hover -->
@@ -71,6 +56,20 @@ const statusColor = computed(() => {
       <p v-if="article.chapeau" class="text-secondary-600 text-sm leading-relaxed line-clamp-3">
         {{ article.chapeau }}
       </p>
+
+      <!-- Tags -->
+      <div v-if="article.tags && article.tags.length > 0" class="flex flex-wrap gap-1 mt-3">
+        <span
+          v-for="tag in article.tags.slice(0, 3)"
+          :key="tag.id"
+          class="px-2 py-0.5 bg-primary-50 text-primary-700 text-xs rounded-full"
+        >
+          {{ tag.nom }}
+        </span>
+        <span v-if="article.tags.length > 3" class="px-2 py-0.5 text-secondary-500 text-xs">
+          +{{ article.tags.length - 3 }}
+        </span>
+      </div>
 
       <!-- Read more indicator -->
       <div class="flex items-center mt-4 text-primary-600 group-hover:text-accent-600 transition-colors">

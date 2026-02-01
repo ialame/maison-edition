@@ -4,6 +4,8 @@ import com.maisonedition.entity.Article;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -21,6 +23,8 @@ public class ArticleDTO {
     private Long auteurId;
     private LocalDateTime datePublication;
     private LocalDateTime dateCreation;
+    private List<TagDTO> tags;
+    private List<Long> tagIds;
 
     public static ArticleDTO fromEntity(Article article) {
         return ArticleDTO.builder()
@@ -36,6 +40,8 @@ public class ArticleDTO {
                 .auteurId(article.getAuteur() != null ? article.getAuteur().getId() : null)
                 .datePublication(article.getDatePublication())
                 .dateCreation(article.getDateCreation())
+                .tags(article.getTags() != null ?
+                        article.getTags().stream().map(TagDTO::fromEntity).collect(Collectors.toList()) : null)
                 .build();
     }
 }

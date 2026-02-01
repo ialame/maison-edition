@@ -28,6 +28,21 @@ public class ArticleController {
         return ResponseEntity.ok(articleService.findDerniersPublies());
     }
 
+    @GetMapping("/tag/{tagSlug}")
+    public ResponseEntity<Page<ArticleDTO>> findByTag(@PathVariable String tagSlug, Pageable pageable) {
+        return ResponseEntity.ok(articleService.findByTag(tagSlug, pageable));
+    }
+
+    @GetMapping("/recherche")
+    public ResponseEntity<Page<ArticleDTO>> search(@RequestParam String q, Pageable pageable) {
+        return ResponseEntity.ok(articleService.search(q, pageable));
+    }
+
+    @GetMapping("/{id}/connexes")
+    public ResponseEntity<List<ArticleDTO>> findRelated(@PathVariable Long id, @RequestParam(defaultValue = "3") int limit) {
+        return ResponseEntity.ok(articleService.findRelated(id, limit));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ArticleDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(articleService.findById(id));

@@ -7,24 +7,28 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Highlight from '@tiptap/extension-highlight'
-import { articleApi, auteurApi, uploadApi } from '@/services/api'
-import type { Article, Auteur } from '@/types'
+import { articleApi, auteurApi, uploadApi, tagApi } from '@/services/api'
+import type { Article, Auteur, Tag } from '@/types'
 
 const articles = ref<Article[]>([])
 const auteurs = ref<Auteur[]>([])
+const tags = ref<Tag[]>([])
 const loading = ref(true)
 const showModal = ref(false)
 const editingArticle = ref<Article | null>(null)
 const saving = ref(false)
 const uploadingImage = ref(false)
 const imagePreview = ref<string | null>(null)
+const newTagName = ref('')
+const creatingTag = ref(false)
 
 const form = ref({
   titre: '',
   chapeau: '',
   contenu: '',
   imagePrincipale: null as string | null,
-  auteurId: null as number | null
+  auteurId: null as number | null,
+  tagIds: [] as number[]
 })
 
 const editor = useEditor({
@@ -65,12 +69,14 @@ onBeforeUnmount(() => {
 
 async function loadData() {
   try {
-    const [articlesRes, auteursRes] = await Promise.all([
+    const [articlesRes, auteursRes, tagsRes] = await Promise.all([
       articleApi.getAll(),
-      auteurApi.getAll()
+      auteurApi.getAll(),
+      tagApi.getAll()
     ])
     articles.value = articlesRes.data
     auteurs.value = auteursRes.data
+    tags.value = tagsRes.data
   } catch (error) {
     console.error('خطأ في التحميل:', error)
   } finally {
@@ -86,7 +92,8 @@ function openModal(article?: Article) {
       chapeau: article.chapeau || '',
       contenu: article.contenu,
       imagePrincipale: article.imagePrincipale,
-      auteurId: article.auteurId
+      auteurId: article.auteurId,
+      tagIds: article.tags?.map(t => t.id) || []
     }
     editor.value?.commands.setContent(article.contenu || '')
     imagePreview.value = article.imagePrincipale ? `/uploads/${article.imagePrincipale}` : null
@@ -97,11 +104,13 @@ function openModal(article?: Article) {
       chapeau: '',
       contenu: '',
       imagePrincipale: null,
-      auteurId: null
+      auteurId: null,
+      tagIds: []
     }
     editor.value?.commands.setContent('')
     imagePreview.value = null
   }
+  newTagName.value = ''
   showModal.value = true
 }
 
@@ -136,7 +145,8 @@ async function saveForm() {
       titre: form.value.titre,
       chapeau: form.value.chapeau || null,
       contenu: editor.value?.getHTML() || '',
-      imagePrincipale: form.value.imagePrincipale
+      imagePrincipale: form.value.imagePrincipale,
+      tagIds: form.value.tagIds
     }
 
     if (editingArticle.value) {
@@ -152,6 +162,31 @@ async function saveForm() {
     alert('حدث خطأ أثناء الحفظ')
   } finally {
     saving.value = false
+  }
+}
+
+async function createTag() {
+  if (!newTagName.value.trim()) return
+  creatingTag.value = true
+  try {
+    const response = await tagApi.create(newTagName.value.trim())
+    tags.value.push(response.data)
+    form.value.tagIds.push(response.data.id)
+    newTagName.value = ''
+  } catch (error) {
+    console.error('خطأ في إنشاء الوسم:', error)
+    alert('حدث خطأ أثناء إنشاء الوسم')
+  } finally {
+    creatingTag.value = false
+  }
+}
+
+function toggleTag(tagId: number) {
+  const index = form.value.tagIds.indexOf(tagId)
+  if (index > -1) {
+    form.value.tagIds.splice(index, 1)
+  } else {
+    form.value.tagIds.push(tagId)
   }
 }
 
@@ -338,6 +373,46 @@ onMounted(loadData)
               class="input"
               placeholder="ملخص قصير للمقال يظهر في صفحة المدونة..."
             ></textarea>
+          </div>
+
+          <!-- Tags -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-secondary-700 mb-2">الوسوم</label>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <button
+                v-for="tag in tags"
+                :key="tag.id"
+                type="button"
+                @click="toggleTag(tag.id)"
+                :class="[
+                  'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
+                  form.tagIds.includes(tag.id)
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+                ]"
+              >
+                {{ tag.nom }}
+              </button>
+              <span v-if="tags.length === 0" class="text-secondary-500 text-sm">لا توجد وسوم بعد</span>
+            </div>
+            <div class="flex gap-2">
+              <input
+                v-model="newTagName"
+                type="text"
+                class="input flex-1"
+                placeholder="أضف وسمًا جديدًا..."
+                @keyup.enter="createTag"
+              />
+              <button
+                type="button"
+                @click="createTag"
+                :disabled="!newTagName.trim() || creatingTag"
+                class="btn btn-outline"
+              >
+                <span v-if="creatingTag" class="inline-block animate-spin mr-1">⟳</span>
+                إضافة
+              </button>
+            </div>
           </div>
 
           <!-- Featured Image -->

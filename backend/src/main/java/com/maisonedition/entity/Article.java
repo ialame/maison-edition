@@ -3,6 +3,8 @@ package com.maisonedition.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "articles")
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(exclude = "tags")
+@ToString(exclude = "tags")
 public class Article {
 
     @Id
@@ -45,6 +49,15 @@ public class Article {
     private LocalDateTime dateCreation;
 
     private LocalDateTime dateModification;
+
+    @ManyToMany
+    @JoinTable(
+        name = "article_tags",
+        joinColumns = @JoinColumn(name = "article_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @Builder.Default
+    private Set<Tag> tags = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

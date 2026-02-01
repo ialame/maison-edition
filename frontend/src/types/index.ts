@@ -73,6 +73,12 @@ export interface Categorie {
   nombreLivres: number
 }
 
+export interface Tag {
+  id: number
+  nom: string
+  slug: string
+}
+
 export interface Article {
   id: number
   titre: string
@@ -85,6 +91,8 @@ export interface Article {
   auteurId: number | null
   datePublication: string | null
   dateCreation: string
+  tags?: Tag[]
+  tagIds?: number[]
 }
 
 export interface Evenement {

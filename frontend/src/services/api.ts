@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest, Utilisateur, AdresseData } from '@/types'
+import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest, Utilisateur, AdresseData, Tag } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -130,6 +130,15 @@ export const articleApi = {
   getBySlug: (slug: string) =>
     api.get<Article>(`/articles/slug/${slug}`),
 
+  getByTag: (tagSlug: string, page = 0, size = 10) =>
+    api.get<Page<Article>>(`/articles/tag/${tagSlug}`, { params: { page, size } }),
+
+  search: (q: string, page = 0, size = 10) =>
+    api.get<Page<Article>>('/articles/recherche', { params: { q, page, size } }),
+
+  getRelated: (id: number, limit = 3) =>
+    api.get<Article[]>(`/articles/${id}/connexes`, { params: { limit } }),
+
   getAll: () =>
     api.get<Article[]>('/articles/admin/tous'),
 
@@ -147,6 +156,29 @@ export const articleApi = {
 
   delete: (id: number) =>
     api.delete(`/articles/${id}`)
+}
+
+export const tagApi = {
+  getAll: () =>
+    api.get<Tag[]>('/tags'),
+
+  getById: (id: number) =>
+    api.get<Tag>(`/tags/${id}`),
+
+  getBySlug: (slug: string) =>
+    api.get<Tag>(`/tags/slug/${slug}`),
+
+  search: (q: string) =>
+    api.get<Tag[]>('/tags/search', { params: { q } }),
+
+  create: (nom: string) =>
+    api.post<Tag>('/tags', { nom }),
+
+  update: (id: number, nom: string) =>
+    api.put<Tag>(`/tags/${id}`, { nom }),
+
+  delete: (id: number) =>
+    api.delete(`/tags/${id}`)
 }
 
 export const uploadApi = {

@@ -54,6 +54,14 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user')
   }
 
+  function updateUser(data: { nom?: string; prenom?: string }) {
+    if (user.value) {
+      if (data.nom !== undefined) user.value.nom = data.nom
+      if (data.prenom !== undefined) user.value.prenom = data.prenom
+      localStorage.setItem('user', JSON.stringify(user.value))
+    }
+  }
+
   return {
     token,
     user,
@@ -62,6 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
     isEditeur,
     login,
     register,
-    logout
+    logout,
+    updateUser
   }
 })

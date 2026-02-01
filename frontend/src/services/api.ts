@@ -243,7 +243,10 @@ export const commandeApi = {
     api.get<Commande>('/commandes/by-session', { params: { sessionId } }),
 
   mesCommandes: () =>
-    api.get<Commande[]>('/commandes/mes-commandes')
+    api.get<Commande[]>('/commandes/mes-commandes'),
+
+  renew: (commandeId: number) =>
+    api.post<{ checkoutUrl: string }>(`/commandes/renouveler/${commandeId}`)
 }
 
 export const latexApi = {
@@ -255,8 +258,14 @@ export const profilApi = {
   get: () =>
     api.get<Utilisateur & AdresseData>('/profil'),
 
+  updateProfil: (data: { nom: string; prenom: string }) =>
+    api.put<{ message: string; nom: string; prenom: string }>('/profil', data),
+
   updateAdresse: (adresse: AdresseData) =>
-    api.put<AdresseData>('/profil/adresse', adresse)
+    api.put<AdresseData>('/profil/adresse', adresse),
+
+  changePassword: (data: { motDePasseActuel: string; nouveauMotDePasse: string }) =>
+    api.put<{ message: string }>('/profil/mot-de-passe', data)
 }
 
 export default api

@@ -4,6 +4,21 @@ import { RouterLink } from 'vue-router'
 import { commandeApi } from '@/services/api'
 import type { Commande } from '@/types'
 
+const renewingId = ref<number | null>(null)
+const renewError = ref('')
+
+async function renewSubscription(commandeId: number) {
+  renewingId.value = commandeId
+  renewError.value = ''
+  try {
+    const response = await commandeApi.renew(commandeId)
+    window.location.href = response.data.checkoutUrl
+  } catch (e: any) {
+    renewError.value = e.response?.data?.error || 'حدث خطأ أثناء تجديد الاشتراك'
+    renewingId.value = null
+  }
+}
+
 const commandes = ref<Commande[]>([])
 const loading = ref(true)
 const error = ref('')
@@ -106,6 +121,11 @@ onMounted(async () => {
         {{ error }}
       </div>
 
+      <!-- Renew Error -->
+      <div v-if="renewError" class="bg-red-50 text-red-700 p-4 rounded-lg mb-4">
+        {{ renewError }}
+      </div>
+
       <!-- No orders -->
       <div v-else-if="paidCommandes.length === 0" class="text-center py-12">
         <svg class="w-16 h-16 mx-auto text-secondary-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,6 +196,16 @@ onMounted(async () => {
                   تصفح الكتب وابدأ القراءة ←
                 </RouterLink>
               </div>
+              <div v-else class="mt-4 pt-4 border-t border-secondary-100">
+                <button
+                  @click="renewSubscription(commande.id)"
+                  :disabled="renewingId === commande.id"
+                  class="btn btn-primary text-sm"
+                >
+                  <span v-if="renewingId === commande.id" class="inline-block animate-spin mr-2">⟳</span>
+                  تجديد الاشتراك
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -245,6 +275,15 @@ onMounted(async () => {
                     >
                       قراءة الكتاب ←
                     </RouterLink>
+                    <button
+                      v-if="!isAbonnementActif(commande)"
+                      @click="renewSubscription(commande.id)"
+                      :disabled="renewingId === commande.id"
+                      class="btn btn-primary text-sm py-1 px-3"
+                    >
+                      <span v-if="renewingId === commande.id" class="inline-block animate-spin mr-1">⟳</span>
+                      تجديد الاشتراك
+                    </button>
                   </div>
                 </div>
               </div>

@@ -146,4 +146,56 @@ public class CommandeService {
             case ABONNEMENT_ANNUEL -> PRIX_ABONNEMENT_ANNUEL;
         };
     }
+
+    public Commande createRenewal(Long commandeId, String userEmail) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        Commande original = commandeRepository.findById(commandeId)
+                .orElseThrow(() -> new RuntimeException("Commande non trouvée"));
+
+        // Verify ownership
+        if (!original.getUtilisateur().getId().equals(utilisateur.getId())) {
+            throw new RuntimeException("Cette commande ne vous appartient pas");
+        }
+
+        // Only allow renewal for subscription types
+        TypeCommande type = original.getType();
+        if (type != TypeCommande.LECTURE_LIVRE &&
+            type != TypeCommande.ABONNEMENT_MENSUEL &&
+            type != TypeCommande.ABONNEMENT_ANNUEL) {
+            throw new RuntimeException("Seuls les abonnements peuvent être renouvelés");
+        }
+
+        // Check for existing pending renewal
+        Long livreId = original.getLivre() != null ? original.getLivre().getId() : null;
+        Commande existingPending = commandeRepository
+                .findPendingOrder(utilisateur.getId(), livreId, type)
+                .orElse(null);
+
+        if (existingPending != null) {
+            return existingPending;
+        }
+
+        BigDecimal montant = calculateMontant(original.getLivre(), type);
+
+        Commande renewal = Commande.builder()
+                .utilisateur(utilisateur)
+                .livre(original.getLivre())
+                .type(type)
+                .statut(StatutCommande.EN_ATTENTE)
+                .montant(montant)
+                .build();
+
+        // Set access dates based on type
+        if (type == TypeCommande.LECTURE_LIVRE || type == TypeCommande.ABONNEMENT_ANNUEL) {
+            renewal.setDateDebutAcces(LocalDate.now());
+            renewal.setDateFinAcces(LocalDate.now().plusYears(1));
+        } else if (type == TypeCommande.ABONNEMENT_MENSUEL) {
+            renewal.setDateDebutAcces(LocalDate.now());
+            renewal.setDateFinAcces(LocalDate.now().plusMonths(1));
+        }
+
+        return commandeRepository.save(renewal);
+    }
 }

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@lombok.extern.slf4j.Slf4j
 public class CommandeService {
 
     private final CommandeRepository commandeRepository;
@@ -101,11 +102,18 @@ public class CommandeService {
     }
 
     public void markAsPaid(String stripeSessionId, String paymentIntentId) {
-        commandeRepository.findByStripeSessionId(stripeSessionId).ifPresent(commande -> {
+        log.info("markAsPaid called with sessionId: {}", stripeSessionId);
+        var optionalCommande = commandeRepository.findByStripeSessionId(stripeSessionId);
+        if (optionalCommande.isPresent()) {
+            Commande commande = optionalCommande.get();
+            log.info("Found commande {} with current status: {}", commande.getId(), commande.getStatut());
             commande.setStatut(StatutCommande.PAYEE);
             commande.setStripePaymentIntentId(paymentIntentId);
             commandeRepository.save(commande);
-        });
+            log.info("Commande {} updated to PAYEE", commande.getId());
+        } else {
+            log.warn("No commande found for sessionId: {}", stripeSessionId);
+        }
     }
 
     public CommandeDTO findByStripeSessionId(String sessionId) {

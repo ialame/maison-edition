@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { livreApi, chapitreApi } from '@/services/api'
 import type { Livre, ChapitreList } from '@/types'

@@ -109,7 +109,31 @@ cd /opt/maison-edition
 
 # Récupérer les dernières modifications
 git pull
+```
 
+#### ⚠️ En cas d'erreur "Your local changes would be overwritten"
+
+Si `git pull` échoue avec ce message :
+```
+error: Your local changes to the following files would be overwritten by merge:
+    frontend/package-lock.json
+Please commit your changes or stash them before you merge.
+```
+
+C'est parce que des fichiers ont été modifiés localement sur le VPS (souvent `package-lock.json` après un `npm install`). Pour résoudre :
+
+```bash
+# Option 1: Annuler les modifications locales du fichier concerné
+git checkout -- frontend/package-lock.json
+git pull
+
+# Option 2: Annuler TOUTES les modifications locales (plus radical)
+git reset --hard origin/main
+```
+
+Ensuite, continuez avec le déploiement normal.
+
+```bash
 # Reconstruire le backend
 cd backend
 ./mvnw clean package -DskipTests

@@ -63,22 +63,32 @@ public class CommandeController {
     public ResponseEntity<String> handleStripeWebhook(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String sigHeader) {
+        log.info("Webhook received, signature header present: {}", sigHeader != null);
         try {
             Event event = stripeService.constructEvent(payload, sigHeader);
+            log.info("Webhook event type: {}", event.getType());
 
             if ("checkout.session.completed".equals(event.getType())) {
                 Session session = (Session) event.getDataObjectDeserializer()
                         .getObject().orElse(null);
+                log.info("Session deserialized: {}", session != null);
                 if (session != null) {
+                    log.info("Processing payment for session: {}, paymentIntent: {}",
+                            session.getId(), session.getPaymentIntent());
                     commandeService.markAsPaid(session.getId(), session.getPaymentIntent());
                     log.info("Payment confirmed for session: {}", session.getId());
+                } else {
+                    log.warn("Session is null after deserialization");
                 }
             }
 
             return ResponseEntity.ok("OK");
         } catch (SignatureVerificationException e) {
-            log.warn("Invalid Stripe webhook signature");
+            log.warn("Invalid Stripe webhook signature: {}", e.getMessage());
             return ResponseEntity.badRequest().body("Invalid signature");
+        } catch (Exception e) {
+            log.error("Error processing webhook: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Error");
         }
     }
 }

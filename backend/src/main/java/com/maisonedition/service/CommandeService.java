@@ -28,10 +28,15 @@ public class CommandeService {
         Utilisateur utilisateur = utilisateurRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        Livre livre = livreRepository.findById(request.getLivreId())
-                .orElseThrow(() -> new RuntimeException("Livre non trouvé"));
-
         TypeCommande type = TypeCommande.valueOf(request.getType());
+
+        // Global subscriptions don't need a book
+        Livre livre = null;
+        if (type != TypeCommande.ABONNEMENT_MENSUEL && type != TypeCommande.ABONNEMENT_ANNUEL) {
+            livre = livreRepository.findById(request.getLivreId())
+                    .orElseThrow(() -> new RuntimeException("Livre non trouvé"));
+        }
+
         BigDecimal montant = calculateMontant(livre, type);
 
         Commande commande = Commande.builder()
@@ -53,7 +58,10 @@ public class CommandeService {
         }
 
         // Set access dates for subscriptions
-        if (type == TypeCommande.ABONNEMENT_MENSUEL) {
+        if (type == TypeCommande.LECTURE_LIVRE) {
+            commande.setDateDebutAcces(LocalDate.now());
+            commande.setDateFinAcces(LocalDate.now().plusYears(1));
+        } else if (type == TypeCommande.ABONNEMENT_MENSUEL) {
             commande.setDateDebutAcces(LocalDate.now());
             commande.setDateFinAcces(LocalDate.now().plusMonths(1));
         } else if (type == TypeCommande.ABONNEMENT_ANNUEL) {
@@ -94,12 +102,19 @@ public class CommandeService {
                 .collect(Collectors.toList());
     }
 
+    // Fixed prices in EUR
+    private static final BigDecimal PRIX_NUMERIQUE = new BigDecimal("10.00");
+    private static final BigDecimal PRIX_LECTURE_LIVRE = new BigDecimal("5.00");
+    private static final BigDecimal PRIX_ABONNEMENT_MENSUEL = new BigDecimal("30.00");
+    private static final BigDecimal PRIX_ABONNEMENT_ANNUEL = new BigDecimal("50.00");
+
     private BigDecimal calculateMontant(Livre livre, TypeCommande type) {
         return switch (type) {
-            case PAPIER -> livre.getPrix() != null ? livre.getPrix() : BigDecimal.ZERO;
-            case NUMERIQUE -> livre.getPrixNumerique() != null ? livre.getPrixNumerique() : BigDecimal.ZERO;
-            case ABONNEMENT_MENSUEL -> livre.getPrixAbonnementMensuel() != null ? livre.getPrixAbonnementMensuel() : BigDecimal.ZERO;
-            case ABONNEMENT_ANNUEL -> livre.getPrixAbonnementAnnuel() != null ? livre.getPrixAbonnementAnnuel() : BigDecimal.ZERO;
+            case PAPIER -> livre != null && livre.getPrix() != null ? livre.getPrix() : BigDecimal.ZERO;
+            case NUMERIQUE -> PRIX_NUMERIQUE;
+            case LECTURE_LIVRE -> PRIX_LECTURE_LIVRE;
+            case ABONNEMENT_MENSUEL -> PRIX_ABONNEMENT_MENSUEL;
+            case ABONNEMENT_ANNUEL -> PRIX_ABONNEMENT_ANNUEL;
         };
     }
 }

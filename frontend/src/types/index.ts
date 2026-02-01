@@ -111,6 +111,19 @@ export interface Utilisateur {
   nom: string
   prenom: string
   role: 'ADMIN' | 'EDITEUR' | 'UTILISATEUR'
+  telephone?: string
+  adresse?: string
+  ville?: string
+  codePostal?: string
+  pays?: string
+}
+
+export interface AdresseData {
+  telephone: string
+  adresse: string
+  ville: string
+  codePostal: string
+  pays: string
 }
 
 export interface AuthResponse {
@@ -133,10 +146,10 @@ export interface Page<T> {
 
 export interface Commande {
   id: number
-  livreId: number
-  livreTitre: string
+  livreId: number | null  // null for global subscriptions
+  livreTitre: string | null
   livreCouverture: string | null
-  type: 'PAPIER' | 'NUMERIQUE' | 'ABONNEMENT_MENSUEL' | 'ABONNEMENT_ANNUEL'
+  type: 'PAPIER' | 'NUMERIQUE' | 'LECTURE_LIVRE' | 'ABONNEMENT_MENSUEL' | 'ABONNEMENT_ANNUEL'
   statut: 'EN_ATTENTE' | 'PAYEE' | 'EN_PREPARATION' | 'EXPEDIEE' | 'LIVREE' | 'ANNULEE' | 'REMBOURSEE'
   montant: number
   nomComplet: string | null
@@ -151,7 +164,7 @@ export interface Commande {
 }
 
 export interface CheckoutRequest {
-  livreId: number
+  livreId?: number  // optional for global subscriptions
   type: string
   nomComplet?: string
   adresse?: string

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { livreApi, chapitreApi } from '@/services/api'
 import type { Livre, ChapitreList } from '@/types'
@@ -8,16 +8,24 @@ const route = useRoute()
 const livre = ref<Livre | null>(null)
 const chapitres = ref<ChapitreList[]>([])
 const loading = ref(true)
+const hasAccess = ref(false)
+
+// Vérifie si un chapitre est accessible (gratuit ou accès acheté)
+function isChapitreAccessible(chap: ChapitreList): boolean {
+  return chap.gratuit || hasAccess.value
+}
 
 onMounted(async () => {
   try {
     const id = Number(route.params.id)
-    const [livreRes, chapitresRes] = await Promise.all([
+    const [livreRes, chapitresRes, accessRes] = await Promise.all([
       livreApi.getById(id),
-      chapitreApi.getByLivre(id)
+      chapitreApi.getByLivre(id),
+      chapitreApi.checkAccess(id).catch(() => ({ data: { hasAccess: false } }))
     ])
     livre.value = livreRes.data
     chapitres.value = chapitresRes.data
+    hasAccess.value = accessRes.data.hasAccess
   } catch (error) {
     console.error('خطأ في تحميل الكتاب:', error)
   } finally {
@@ -137,8 +145,9 @@ onMounted(async () => {
                 :key="chapitre.id"
                 class="border-b border-amber-100 last:border-b-0"
               >
+                <!-- Chapitre accessible (gratuit ou acheté) -->
                 <RouterLink
-                  v-if="chapitre.gratuit"
+                  v-if="isChapitreAccessible(chapitre)"
                   :to="`/livres/${livre.id}/lire/${chapitre.numero}`"
                   class="flex items-center justify-between p-4 hover:bg-amber-50 transition-colors group"
                 >
@@ -151,12 +160,14 @@ onMounted(async () => {
                     </span>
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">مجاني</span>
+                    <span v-if="chapitre.gratuit" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">مجاني</span>
+                    <span v-else class="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">مُشترى</span>
                     <svg class="w-5 h-5 text-secondary-400 group-hover:text-primary-600 group-hover:-translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                   </div>
                 </RouterLink>
+                <!-- Chapitre payant non acheté -->
                 <div v-else class="flex items-center justify-between p-4 opacity-60">
                   <div class="flex items-center">
                     <span class="w-8 h-8 rounded-full bg-secondary-100 text-secondary-500 flex items-center justify-center text-sm font-bold ml-3">
@@ -173,7 +184,10 @@ onMounted(async () => {
                 </div>
               </div>
             </div>
-            <p class="text-sm text-secondary-500 mt-3 text-center">
+            <p v-if="hasAccess" class="text-sm text-green-600 mt-3 text-center">
+              ✓ لديك حق الوصول إلى جميع الفصول
+            </p>
+            <p v-else class="text-sm text-secondary-500 mt-3 text-center">
               اقرأ الفصول المجانية واشترِ الكتاب للوصول الكامل
             </p>
           </div>
@@ -181,24 +195,28 @@ onMounted(async () => {
           <!-- Actions -->
           <div class="flex flex-wrap gap-4">
             <RouterLink
-              v-if="livre.disponible"
+              v-if="livre.disponible && !hasAccess"
               :to="`/livres/${livre.id}/commander`"
               class="btn btn-primary"
             >
+              <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
               اطلب الآن
             </RouterLink>
-            <button v-else class="btn btn-primary opacity-50 cursor-not-allowed" disabled>
+            <button v-else-if="!livre.disponible" class="btn btn-primary opacity-50 cursor-not-allowed" disabled>
               غير متوفر
             </button>
             <RouterLink
-              v-if="chapitres.some(c => c.gratuit)"
-              :to="`/livres/${livre.id}/lire/${chapitres.find(c => c.gratuit)?.numero}`"
-              class="btn btn-secondary"
+              v-if="chapitres.length > 0"
+              :to="`/livres/${livre.id}/lire/${chapitres[0]?.numero}`"
+              class="btn"
+              :class="hasAccess ? 'btn-primary' : 'btn-secondary'"
             >
               <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              ابدأ القراءة
+              {{ hasAccess ? 'قراءة الكتاب' : 'ابدأ القراءة' }}
             </RouterLink>
             <RouterLink to="/livres" class="btn btn-outline">
               العودة للكتب

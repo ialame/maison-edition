@@ -29,11 +29,8 @@ public class CommandeDTO {
     private LocalDateTime dateCommande;
 
     public static CommandeDTO fromEntity(Commande commande) {
-        return CommandeDTO.builder()
+        CommandeDTOBuilder builder = CommandeDTO.builder()
                 .id(commande.getId())
-                .livreId(commande.getLivre().getId())
-                .livreTitre(commande.getLivre().getTitre())
-                .livreCouverture(commande.getLivre().getCouverture())
                 .type(commande.getType().name())
                 .statut(commande.getStatut().name())
                 .montant(commande.getMontant())
@@ -45,7 +42,15 @@ public class CommandeDTO {
                 .telephone(commande.getTelephone())
                 .dateDebutAcces(commande.getDateDebutAcces())
                 .dateFinAcces(commande.getDateFinAcces())
-                .dateCommande(commande.getDateCommande())
-                .build();
+                .dateCommande(commande.getDateCommande());
+
+        // Handle null livre for global subscriptions
+        if (commande.getLivre() != null) {
+            builder.livreId(commande.getLivre().getId())
+                   .livreTitre(commande.getLivre().getTitre())
+                   .livreCouverture(commande.getLivre().getCouverture());
+        }
+
+        return builder.build();
     }
 }

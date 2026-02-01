@@ -39,6 +39,17 @@ const router = createRouter({
           component: () => import('@/views/public/CommandeSuccesView.vue')
         },
         {
+          path: 'mes-commandes',
+          name: 'mes-commandes',
+          component: () => import('@/views/public/MesCommandesView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'abonnements',
+          name: 'abonnements',
+          component: () => import('@/views/public/AbonnementsView.vue')
+        },
+        {
           path: 'auteurs',
           name: 'auteurs',
           component: () => import('@/views/public/AuteursView.vue')

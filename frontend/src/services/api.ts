@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest } from '@/types'
+import type { Livre, Auteur, Categorie, Article, Evenement, AuthResponse, Page, Chapitre, ChapitreList, ChapitreDetail, Commande, CheckoutRequest, Utilisateur, AdresseData } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -150,14 +150,14 @@ export const articleApi = {
 }
 
 export const uploadApi = {
-  upload: (file: File, type: 'livres' | 'auteurs' | 'articles' | 'evenements') => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return api.post<{ path: string; url: string }>(`/upload/${type}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-  },
-  delete: (path: string) =>
+    upload: (file: File, type: 'livres' | 'auteurs' | 'articles' | 'evenements') => {
+        const formData = new FormData()
+        formData.append('file', file)
+        return api.post<{ path: string; url: string }>(`/upload/${type}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+    },
+    delete: (path: string) =>
     api.delete('/upload', { params: { path } })
 }
 
@@ -171,6 +171,9 @@ export const chapitreApi = {
 
   getByNumero: (livreId: number, numero: number) =>
     api.get<ChapitreDetail>(`/livres/${livreId}/chapitres/${numero}`),
+
+  checkAccess: (livreId: number) =>
+    api.get<{ hasAccess: boolean }>(`/livres/${livreId}/acces`),
 
   // Admin endpoints
   getAllAdmin: (livreId: number) =>
@@ -246,6 +249,14 @@ export const commandeApi = {
 export const latexApi = {
   convert: (latex: string) =>
     api.post<{ html: string }>('/admin/convert-latex', { latex })
+}
+
+export const profilApi = {
+  get: () =>
+    api.get<Utilisateur & AdresseData>('/profil'),
+
+  updateAdresse: (adresse: AdresseData) =>
+    api.put<AdresseData>('/profil/adresse', adresse)
 }
 
 export default api

@@ -15,6 +15,8 @@ const livre = ref<Livre | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const showTableOfContents = ref(false)
+const hasAccess = ref(false) // L'utilisateur a-t-il accès au contenu payant ?
+const isPaidChapterError = ref(false) // Erreur 403 pour chapitre payant
 const showSettings = ref(false)
 const contentRef = ref<HTMLDivElement | null>(null)
 const readingProgress = ref(0)
@@ -59,10 +61,16 @@ const nextChapitre = computed(() => {
   const currentIndex = chapitres.value.findIndex(c => c.numero === numero.value)
   if (currentIndex >= 0 && currentIndex < chapitres.value.length - 1) {
     const next = chapitres.value[currentIndex + 1]
-    return next.gratuit ? next : null
+    // Accessible si gratuit ou si l'utilisateur a accès (achat/abonnement)
+    return (next.gratuit || hasAccess.value) ? next : null
   }
   return null
 })
+
+// Vérifie si un chapitre est accessible
+function isChapitreAccessible(chap: ChapitreList): boolean {
+  return chap.gratuit || hasAccess.value
+}
 
 const positionKey = computed(() => `reader-pos-${livreId.value}-${numero.value}`)
 
@@ -98,23 +106,34 @@ function onScroll() {
 async function loadData() {
   loading.value = true
   error.value = null
+  isPaidChapterError.value = false
 
   try {
-    const [chapitreRes, chapitresRes, livreRes] = await Promise.all([
-      chapitreApi.getByNumero(livreId.value, numero.value),
+    // D'abord, charger les infos de base et vérifier l'accès
+    const [chapitresRes, livreRes, accessRes] = await Promise.all([
       chapitreApi.getByLivre(livreId.value),
-      livreApi.getById(livreId.value)
+      livreApi.getById(livreId.value),
+      chapitreApi.checkAccess(livreId.value).catch(() => ({ data: { hasAccess: false } }))
     ])
 
-    chapitre.value = chapitreRes.data
     chapitres.value = chapitresRes.data
     livre.value = livreRes.data
-  } catch (err: any) {
-    if (err.response?.status === 403) {
-      error.value = 'هذا الفصل غير متاح للقراءة المجانية'
-    } else {
-      error.value = 'حدث خطأ أثناء تحميل الفصل'
+    hasAccess.value = accessRes.data.hasAccess
+
+    // Ensuite, essayer de charger le contenu du chapitre
+    try {
+      const chapitreRes = await chapitreApi.getByNumero(livreId.value, numero.value)
+      chapitre.value = chapitreRes.data
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        isPaidChapterError.value = true
+        error.value = 'هذا الفصل مدفوع'
+      } else {
+        error.value = 'حدث خطأ أثناء تحميل الفصل'
+      }
     }
+  } catch (err: any) {
+    error.value = 'حدث خطأ أثناء تحميل البيانات'
   } finally {
     loading.value = false
     await nextTick()
@@ -442,14 +461,14 @@ onUnmounted(() => {
           <button
             v-for="chap in chapitres"
             :key="chap.id"
-            @click="chap.gratuit ? goToChapitre(chap.numero) : null"
+            @click="isChapitreAccessible(chap) ? goToChapitre(chap.numero) : null"
             :class="[
               'w-full text-right p-4 rounded-xl mb-2 transition-all',
               chap.numero === numero
                 ? (theme === 'dark'
                   ? 'bg-gray-700 border-r-4 border-amber-500'
                   : 'bg-gradient-to-l from-primary-100 to-amber-100 border-r-4 border-primary-600')
-                : chap.gratuit
+                : isChapitreAccessible(chap)
                   ? (theme === 'dark' ? 'hover:bg-gray-700 cursor-pointer' : 'hover:bg-amber-50 cursor-pointer')
                   : 'opacity-50 cursor-not-allowed'
             ]"
@@ -464,7 +483,7 @@ onUnmounted(() => {
                 {{ chap.titre }}
               </span>
               <span
-                v-if="!chap.gratuit"
+                v-if="!chap.gratuit && !hasAccess"
                 class="text-xs px-2 py-1 rounded-full"
                 :class="theme === 'dark' ? 'bg-gray-600 text-gray-400' : 'bg-secondary-200 text-secondary-600'"
               >
@@ -491,19 +510,41 @@ onUnmounted(() => {
 
       <!-- Error -->
       <div v-else-if="error" class="max-w-xl mx-auto text-center py-24">
-        <div class="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg class="w-12 h-12 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6"
+             :class="isPaidChapterError ? 'bg-primary-100' : 'bg-amber-100'">
+          <svg v-if="isPaidChapterError" class="w-12 h-12 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <svg v-else class="w-12 h-12 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
         <h2 class="text-2xl font-serif font-bold mb-4" :class="currentTheme.headerText">{{ error }}</h2>
-        <p class="mb-8" :class="currentTheme.headerMuted">يمكنك قراءة الفصول المجانية أو شراء الكتاب للوصول الكامل</p>
-        <RouterLink
-          :to="`/livres/${livreId}`"
-          class="btn btn-primary"
-        >
-          العودة للكتاب
-        </RouterLink>
+        <p v-if="isPaidChapterError" class="mb-8" :class="currentTheme.headerMuted">
+          اشترِ الكتاب أو اشترك للوصول إلى جميع الفصول
+        </p>
+        <p v-else class="mb-8" :class="currentTheme.headerMuted">
+          يمكنك قراءة الفصول المجانية أو شراء الكتاب للوصول الكامل
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <RouterLink
+            v-if="isPaidChapterError"
+            :to="`/livres/${livreId}/commander`"
+            class="btn btn-primary"
+          >
+            <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            شراء الكتاب
+          </RouterLink>
+          <RouterLink
+            :to="`/livres/${livreId}`"
+            class="btn"
+            :class="isPaidChapterError ? 'btn-outline' : 'btn-primary'"
+          >
+            العودة للكتاب
+          </RouterLink>
+        </div>
       </div>
 
       <!-- Chapter Content -->

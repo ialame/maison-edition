@@ -35,6 +35,13 @@ public class Utilisateur {
     @Column(nullable = false)
     private Boolean actif = true;
 
+    // Adresse de livraison
+    private String telephone;
+    private String adresse;
+    private String ville;
+    private String codePostal;
+    private String pays;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateCreation;
 

@@ -4,6 +4,9 @@ import com.maisonedition.dto.ChapitreDTO;
 import com.maisonedition.dto.ChapitreDetailDTO;
 import com.maisonedition.dto.ChapitreListDTO;
 import com.maisonedition.entity.Chapitre;
+import com.maisonedition.entity.Utilisateur;
+import com.maisonedition.repository.UtilisateurRepository;
+import com.maisonedition.service.AccessService;
 import com.maisonedition.service.ChapitreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -32,6 +38,8 @@ import java.util.stream.Collectors;
 public class ChapitreController {
 
     private final ChapitreService chapitreService;
+    private final AccessService accessService;
+    private final UtilisateurRepository utilisateurRepository;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -56,18 +64,35 @@ public class ChapitreController {
         return ResponseEntity.ok(dtos);
     }
 
+    /**
+     * Vérifie si l'utilisateur connecté a accès au livre (achat ou abonnement actif)
+     */
+    @GetMapping("/livres/{livreId}/acces")
+    public ResponseEntity<java.util.Map<String, Boolean>> checkAccess(@PathVariable Long livreId) {
+        Long utilisateurId = getCurrentUserId();
+        boolean hasAccess = utilisateurId != null && accessService.hasAccessToBook(utilisateurId, livreId);
+        return ResponseEntity.ok(java.util.Map.of("hasAccess", hasAccess));
+    }
+
     @GetMapping("/livres/{livreId}/chapitres/{numero}")
     public ResponseEntity<ChapitreDetailDTO> getChapitre(
             @PathVariable Long livreId,
             @PathVariable Integer numero) {
         Chapitre chapitre = chapitreService.findByLivreIdAndNumero(livreId, numero);
 
-        // Si le chapitre n'est pas gratuit, on ne renvoie pas le contenu
-        if (!chapitre.getGratuit()) {
-            return ResponseEntity.status(403).build();
+        // Si le chapitre est gratuit, tout le monde peut le lire
+        if (chapitre.getGratuit()) {
+            return ResponseEntity.ok(toDetailDTO(chapitre));
         }
 
-        return ResponseEntity.ok(toDetailDTO(chapitre));
+        // Sinon, vérifier si l'utilisateur a accès (achat ou abonnement)
+        Long utilisateurId = getCurrentUserId();
+        if (utilisateurId != null && accessService.hasAccessToBook(utilisateurId, livreId)) {
+            return ResponseEntity.ok(toDetailDTO(chapitre));
+        }
+
+        // Pas d'accès
+        return ResponseEntity.status(403).build();
     }
 
     @GetMapping("/livres/{livreId}/chapitres/{numero}/pdf")
@@ -76,8 +101,14 @@ public class ChapitreController {
             @PathVariable Integer numero) {
         Chapitre chapitre = chapitreService.findByLivreIdAndNumero(livreId, numero);
 
-        // Si le chapitre n'est pas gratuit, on refuse l'accès
-        if (!chapitre.getGratuit()) {
+        // Vérifier l'accès : gratuit ou achat/abonnement
+        boolean hasAccess = chapitre.getGratuit();
+        if (!hasAccess) {
+            Long utilisateurId = getCurrentUserId();
+            hasAccess = utilisateurId != null && accessService.hasAccessToBook(utilisateurId, livreId);
+        }
+
+        if (!hasAccess) {
             return ResponseEntity.status(403).build();
         }
 
@@ -262,5 +293,21 @@ public class ChapitreController {
                 .gratuit(dto.getGratuit() != null ? dto.getGratuit() : false)
                 .publie(dto.getPublie() != null ? dto.getPublie() : true)
                 .build();
+    }
+
+    /**
+     * Récupère l'ID de l'utilisateur connecté, ou null si non connecté
+     */
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return null;
+        }
+
+        String email = authentication.getName();
+        return utilisateurRepository.findByEmail(email)
+                .map(Utilisateur::getId)
+                .orElse(null);
     }
 }

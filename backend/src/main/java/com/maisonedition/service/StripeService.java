@@ -34,19 +34,25 @@ public class StripeService {
     public Session createCheckoutSession(Commande commande) throws StripeException {
         String description = switch (commande.getType()) {
             case PAPIER -> "نسخة ورقية - " + commande.getLivre().getTitre();
-            case NUMERIQUE -> "نسخة إلكترونية - " + commande.getLivre().getTitre();
-            case ABONNEMENT_MENSUEL -> "اشتراك شهري - " + commande.getLivre().getTitre();
-            case ABONNEMENT_ANNUEL -> "اشتراك سنوي - " + commande.getLivre().getTitre();
+            case NUMERIQUE -> "تحميل PDF - " + commande.getLivre().getTitre();
+            case LECTURE_LIVRE -> "قراءة لمدة سنة - " + commande.getLivre().getTitre();
+            case ABONNEMENT_MENSUEL -> "اشتراك شهري - جميع الكتب";
+            case ABONNEMENT_ANNUEL -> "اشتراك سنوي - جميع الكتب";
         };
+
+        // Cancel URL depends on whether it's a book-specific or global order
+        String cancelUrl = commande.getLivre() != null
+                ? frontendUrl + "/livres/" + commande.getLivre().getId() + "/commander"
+                : frontendUrl + "/abonnements";
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(frontendUrl + "/commande/succes?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl(frontendUrl + "/livres/" + commande.getLivre().getId() + "/commander")
+                .setCancelUrl(cancelUrl)
                 .addLineItem(SessionCreateParams.LineItem.builder()
                         .setQuantity(1L)
                         .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                                .setCurrency("sar")
+                                .setCurrency("eur")
                                 .setUnitAmount(commande.getMontant().multiply(BigDecimal.valueOf(100)).longValue())
                                 .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                         .setName(description)

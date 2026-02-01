@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import { livreApi, commandeApi } from '@/services/api'
+import { livreApi, commandeApi, profilApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import type { Livre } from '@/types'
 
@@ -14,6 +14,12 @@ const loading = ref(true)
 const submitting = ref(false)
 const error = ref<string | null>(null)
 const selectedType = ref<string | null>(null)
+const saveAdresse = ref(true)
+const hasSavedAdresse = ref(false)
+
+// Fixed prices (in EUR)
+const PRIX_NUMERIQUE = 10
+const PRIX_LECTURE_LIVRE = 5
 
 // Shipping form for paper orders
 const shipping = ref({
@@ -26,13 +32,7 @@ const shipping = ref({
 })
 
 const livreId = computed(() => Number(route.params.id))
-
 const hasPapier = computed(() => livre.value?.prix && livre.value.prix > 0)
-const hasNumerique = computed(() => livre.value?.prixNumerique && livre.value.prixNumerique > 0)
-const hasAbonnement = computed(() =>
-  (livre.value?.prixAbonnementMensuel && livre.value.prixAbonnementMensuel > 0) ||
-  (livre.value?.prixAbonnementAnnuel && livre.value.prixAbonnementAnnuel > 0)
-)
 
 const canSubmit = computed(() => {
   if (!selectedType.value) return false
@@ -47,6 +47,29 @@ onMounted(async () => {
   try {
     const res = await livreApi.getById(livreId.value)
     livre.value = res.data
+
+    // Pre-fill shipping with saved address if authenticated
+    if (authStore.isAuthenticated) {
+      try {
+        const profilRes = await profilApi.get()
+        const profil = profilRes.data
+        if (profil.adresse || profil.telephone) {
+          hasSavedAdresse.value = true
+          shipping.value = {
+            nomComplet: `${profil.prenom} ${profil.nom}`,
+            adresse: profil.adresse || '',
+            ville: profil.ville || '',
+            codePostal: profil.codePostal || '',
+            pays: profil.pays || '',
+            telephone: profil.telephone || ''
+          }
+        } else {
+          shipping.value.nomComplet = `${profil.prenom} ${profil.nom}`
+        }
+      } catch {
+        // Ignore profile fetch errors
+      }
+    }
   } catch (err) {
     error.value = 'الكتاب غير موجود'
   } finally {
@@ -77,6 +100,16 @@ async function submitOrder() {
 
     if (selectedType.value === 'PAPIER') {
       Object.assign(request, shipping.value)
+
+      if (saveAdresse.value) {
+        await profilApi.updateAdresse({
+          telephone: shipping.value.telephone,
+          adresse: shipping.value.adresse,
+          ville: shipping.value.ville,
+          codePostal: shipping.value.codePostal,
+          pays: shipping.value.pays
+        }).catch(() => {})
+      }
     }
 
     const res = await commandeApi.checkout(request)
@@ -137,7 +170,7 @@ async function submitOrder() {
 
         <h2 class="text-xl font-serif font-bold text-secondary-800 mb-6">اختر نوع الطلب</h2>
 
-        <!-- 3 Order Options -->
+        <!-- Order Options -->
         <div class="grid md:grid-cols-3 gap-6 mb-10">
           <!-- Paper -->
           <button
@@ -156,12 +189,11 @@ async function submitOrder() {
             </div>
             <h3 class="text-lg font-bold text-secondary-800 mb-1">نسخة ورقية</h3>
             <p class="text-sm text-secondary-500 mb-4">كتاب مطبوع يصلك عبر البريد</p>
-            <p class="text-2xl font-bold text-primary-700">{{ livre.prix?.toFixed(2) }} <span class="text-sm font-normal">ر.س</span></p>
+            <p class="text-2xl font-bold text-primary-700">{{ livre.prix?.toFixed(2) }} <span class="text-sm font-normal">€</span></p>
           </button>
 
-          <!-- Electronic -->
+          <!-- PDF Download -->
           <button
-            v-if="hasNumerique"
             @click="selectType('NUMERIQUE')"
             class="text-right rounded-2xl border-2 p-6 transition-all"
             :class="selectedType === 'NUMERIQUE'
@@ -174,57 +206,43 @@ async function submitOrder() {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-secondary-800 mb-1">نسخة إلكترونية</h3>
-            <p class="text-sm text-secondary-500 mb-4">تحميل فوري بصيغة PDF</p>
-            <p class="text-2xl font-bold text-primary-700">{{ livre.prixNumerique?.toFixed(2) }} <span class="text-sm font-normal">ر.س</span></p>
+            <h3 class="text-lg font-bold text-secondary-800 mb-1">تحميل PDF</h3>
+            <p class="text-sm text-secondary-500 mb-4">تحميل فوري - ملكية دائمة</p>
+            <p class="text-2xl font-bold text-primary-700">{{ PRIX_NUMERIQUE.toFixed(2) }} <span class="text-sm font-normal">€</span></p>
           </button>
 
-          <!-- Subscription -->
-          <div
-            v-if="hasAbonnement"
+          <!-- Reading subscription (1 book, 1 year) -->
+          <button
+            @click="selectType('LECTURE_LIVRE')"
             class="text-right rounded-2xl border-2 p-6 transition-all"
-            :class="(selectedType === 'ABONNEMENT_MENSUEL' || selectedType === 'ABONNEMENT_ANNUEL')
+            :class="selectedType === 'LECTURE_LIVRE'
               ? 'border-primary-500 bg-primary-50 shadow-lg'
-              : 'border-secondary-200 bg-white'"
+              : 'border-secondary-200 bg-white hover:border-primary-300 hover:shadow-md'"
           >
             <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4"
-              :class="(selectedType === 'ABONNEMENT_MENSUEL' || selectedType === 'ABONNEMENT_ANNUEL') ? 'bg-primary-100' : 'bg-secondary-100'">
-              <svg class="w-7 h-7" :class="(selectedType === 'ABONNEMENT_MENSUEL' || selectedType === 'ABONNEMENT_ANNUEL') ? 'text-primary-700' : 'text-secondary-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              :class="selectedType === 'LECTURE_LIVRE' ? 'bg-primary-100' : 'bg-secondary-100'">
+              <svg class="w-7 h-7" :class="selectedType === 'LECTURE_LIVRE' ? 'text-primary-700' : 'text-secondary-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-secondary-800 mb-1">اشتراك قراءة</h3>
-            <p class="text-sm text-secondary-500 mb-4">قراءة جميع الفصول عبر الإنترنت</p>
-            <div class="space-y-2">
-              <button
-                v-if="livre.prixAbonnementMensuel && livre.prixAbonnementMensuel > 0"
-                @click="selectType('ABONNEMENT_MENSUEL')"
-                class="w-full py-2 px-4 rounded-lg border-2 text-sm font-medium transition-all"
-                :class="selectedType === 'ABONNEMENT_MENSUEL'
-                  ? 'border-primary-500 bg-primary-100 text-primary-800'
-                  : 'border-secondary-200 hover:border-primary-300 text-secondary-700'"
-              >
-                شهري — {{ livre.prixAbonnementMensuel.toFixed(2) }} ر.س / شهر
-              </button>
-              <button
-                v-if="livre.prixAbonnementAnnuel && livre.prixAbonnementAnnuel > 0"
-                @click="selectType('ABONNEMENT_ANNUEL')"
-                class="w-full py-2 px-4 rounded-lg border-2 text-sm font-medium transition-all"
-                :class="selectedType === 'ABONNEMENT_ANNUEL'
-                  ? 'border-primary-500 bg-primary-100 text-primary-800'
-                  : 'border-secondary-200 hover:border-primary-300 text-secondary-700'"
-              >
-                سنوي — {{ livre.prixAbonnementAnnuel.toFixed(2) }} ر.س / سنة
-              </button>
-            </div>
-          </div>
+            <h3 class="text-lg font-bold text-secondary-800 mb-1">قراءة لمدة سنة</h3>
+            <p class="text-sm text-secondary-500 mb-4">قراءة هذا الكتاب عبر الإنترنت</p>
+            <p class="text-2xl font-bold text-primary-700">{{ PRIX_LECTURE_LIVRE.toFixed(2) }} <span class="text-sm font-normal">€</span></p>
+          </button>
         </div>
 
-        <!-- No options available -->
-        <div v-if="!hasPapier && !hasNumerique && !hasAbonnement" class="text-center py-12 bg-amber-50 rounded-2xl">
-          <p class="text-secondary-600 text-lg">لم يتم تحديد أسعار لهذا الكتاب بعد.</p>
-          <p class="text-secondary-400 mt-2">يرجى التواصل معنا للحصول على معلومات الطلب.</p>
+        <!-- Global subscriptions link -->
+        <div class="bg-gradient-to-l from-amber-50 to-white rounded-xl border border-amber-200 p-6 mb-10">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-secondary-800 mb-1">هل تريد قراءة جميع الكتب؟</h3>
+              <p class="text-sm text-secondary-500">اشترك في خدمة القراءة غير المحدودة بسعر مخفض</p>
+            </div>
+            <RouterLink to="/abonnements" class="btn btn-secondary">
+              عرض الاشتراكات
+            </RouterLink>
+          </div>
         </div>
 
         <!-- Shipping Form (only for paper) -->
@@ -237,7 +255,7 @@ async function submitOrder() {
             </div>
             <div>
               <label class="block text-sm font-medium text-secondary-700 mb-1">رقم الهاتف *</label>
-              <input v-model="shipping.telephone" type="tel" class="input w-full" dir="ltr" placeholder="+966..." />
+              <input v-model="shipping.telephone" type="tel" class="input w-full" dir="ltr" placeholder="+33..." />
             </div>
             <div class="md:col-span-2">
               <label class="block text-sm font-medium text-secondary-700 mb-1">العنوان *</label>
@@ -249,12 +267,24 @@ async function submitOrder() {
             </div>
             <div>
               <label class="block text-sm font-medium text-secondary-700 mb-1">الرمز البريدي</label>
-              <input v-model="shipping.codePostal" type="text" class="input w-full" dir="ltr" placeholder="12345" />
+              <input v-model="shipping.codePostal" type="text" class="input w-full" dir="ltr" placeholder="75001" />
             </div>
             <div>
               <label class="block text-sm font-medium text-secondary-700 mb-1">البلد</label>
-              <input v-model="shipping.pays" type="text" class="input w-full" placeholder="المملكة العربية السعودية" />
+              <input v-model="shipping.pays" type="text" class="input w-full" placeholder="فرنسا" />
             </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-secondary-100">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input
+                v-model="saveAdresse"
+                type="checkbox"
+                class="w-5 h-5 rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span class="text-sm text-secondary-700">
+                {{ hasSavedAdresse ? 'تحديث عنواني المحفوظ بهذه المعلومات' : 'حفظ هذا العنوان للطلبات المستقبلية' }}
+              </span>
+            </label>
           </div>
         </div>
 

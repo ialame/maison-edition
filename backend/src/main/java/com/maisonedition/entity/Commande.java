@@ -23,7 +23,7 @@ public class Commande {
     private Utilisateur utilisateur;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "livre_id", nullable = false)
+    @JoinColumn(name = "livre_id")  // nullable for global subscriptions
     private Livre livre;
 
     @Enumerated(EnumType.STRING)

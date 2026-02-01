@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class CheckoutRequest {
     private Long livreId;
-    private String type; // PAPIER, NUMERIQUE, ABONNEMENT_MENSUEL, ABONNEMENT_ANNUEL
+    private String type; // PAPIER, NUMERIQUE, LECTURE_LIVRE, ABONNEMENT_MENSUEL, ABONNEMENT_ANNUEL
 
     // Shipping info (for paper orders)
     private String nomComplet;

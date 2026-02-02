@@ -199,7 +199,12 @@ async function submitOrder() {
     const res = await commandeApi.checkout(request)
     window.location.href = res.data.checkoutUrl
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'حدث خطأ أثناء إنشاء الطلب'
+    const errorMsg = err.response?.data?.error
+    if (errorMsg === 'STOCK_EPUISE') {
+      error.value = 'عذراً، هذا الكتاب غير متوفر حالياً في المخزون. يرجى اختيار النسخة الرقمية أو العودة لاحقاً.'
+    } else {
+      error.value = errorMsg || 'حدث خطأ أثناء إنشاء الطلب'
+    }
     submitting.value = false
   }
 }

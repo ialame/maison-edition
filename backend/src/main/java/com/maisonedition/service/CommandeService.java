@@ -41,12 +41,11 @@ public class CommandeService {
                     .orElseThrow(() -> new RuntimeException("Livre non trouvé"));
             livreId = livre.getId();
 
-            // Check stock for paper orders (only if stock management is enabled for this book)
+            // Check stock for paper orders
             if (type == TypeCommande.PAPIER) {
-                // If stock is explicitly set to 0, reject the order
-                // If stock is null, assume unlimited stock (backwards compatibility)
-                if (livre.getStock() != null && livre.getStock() <= 0) {
-                    throw new RuntimeException("Ce livre n'est plus en stock");
+                if (livre.getStock() == null || livre.getStock() <= 0) {
+                    log.warn("Attempted to order book {} with stock={}", livre.getId(), livre.getStock());
+                    throw new RuntimeException("STOCK_EPUISE");
                 }
             }
         }

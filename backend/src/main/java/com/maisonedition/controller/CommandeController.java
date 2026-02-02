@@ -67,6 +67,9 @@ public class CommandeController {
             log.error("Stripe error creating checkout session", e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Erreur lors de la création de la session de paiement"));
+        } catch (RuntimeException e) {
+            log.error("Error creating order: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 

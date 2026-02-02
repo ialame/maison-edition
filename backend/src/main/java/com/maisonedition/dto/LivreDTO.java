@@ -32,6 +32,7 @@ public class LivreDTO {
     private Integer stock;
     private Integer seuilAlerte;
     private Boolean stockBas;
+    private String pdfPath;
     private List<AuteurDTO> auteurs;
     private CategorieDTO categorie;
 
@@ -56,6 +57,7 @@ public class LivreDTO {
                 .stock(livre.getStock())
                 .seuilAlerte(livre.getSeuilAlerte())
                 .stockBas(livre.getStock() != null && livre.getSeuilAlerte() != null && livre.getStock() <= livre.getSeuilAlerte())
+                .pdfPath(livre.getPdfPath())
                 .auteurs(livre.getAuteurs() != null ?
                         livre.getAuteurs().stream().map(AuteurDTO::fromEntity).collect(Collectors.toList()) : null)
                 .categorie(livre.getCategorie() != null ? CategorieDTO.fromEntity(livre.getCategorie()) : null)

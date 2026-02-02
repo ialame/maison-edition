@@ -68,6 +68,9 @@ public class Livre {
     @Builder.Default
     private Integer seuilAlerte = 5;
 
+    @Column
+    private String pdfPath;
+
     @ManyToMany
     @JoinTable(
         name = "livre_auteur",

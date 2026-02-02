@@ -1,10 +1,8 @@
 package com.maisonedition.service;
 
-import com.maisonedition.entity.Chapitre;
 import com.maisonedition.entity.Commande;
 import com.maisonedition.entity.Livre;
 import com.maisonedition.entity.TypeCommande;
-import com.maisonedition.repository.ChapitreRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +25,6 @@ import java.util.List;
 public class EmailService {
 
     private final JavaMailSender mailSender;
-    private final ChapitreRepository chapitreRepository;
 
     @Value("${app.mail.from}")
     private String fromEmail;
@@ -109,15 +105,10 @@ public class EmailService {
         String customerName = commande.getUtilisateur().getPrenom() + " " + commande.getUtilisateur().getNom();
         String subject = "Votre livre numérique: " + livre.getTitre() + " - Dar Adloun";
 
-        // Get all chapters with PDFs
-        List<Chapitre> chapitres = chapitreRepository.findByLivreIdOrderByNumeroAsc(livre.getId())
-                .stream()
-                .filter(c -> c.getPdfPath() != null && !c.getPdfPath().isEmpty())
-                .toList();
-
-        if (chapitres.isEmpty()) {
-            log.warn("No PDF chapters found for book {} in commande {}", livre.getId(), commande.getId());
-            // Still send confirmation but without attachments
+        // Check if book has a PDF
+        if (livre.getPdfPath() == null || livre.getPdfPath().isEmpty()) {
+            log.warn("No PDF found for book {} in commande {}", livre.getId(), commande.getId());
+            // Still send confirmation but without attachment
             String htmlContent = buildDigitalDeliveryEmail(commande, customerName, false);
             sendHtmlEmail(to, subject, htmlContent);
             return;
@@ -134,33 +125,31 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
-            // Attach each chapter PDF
+            // Attach book PDF
             Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-            for (Chapitre chapitre : chapitres) {
-                Path pdfPath = uploadPath.resolve(chapitre.getPdfPath());
-                File pdfFile = pdfPath.toFile();
-                if (pdfFile.exists() && pdfFile.isFile()) {
-                    String attachmentName = String.format("%02d-%s.pdf", chapitre.getNumero(),
-                            sanitizeFilename(chapitre.getTitre()));
-                    FileSystemResource resource = new FileSystemResource(pdfFile);
-                    helper.addAttachment(attachmentName, resource);
-                    log.info("Attached PDF: {} for chapitre {}", attachmentName, chapitre.getId());
-                } else {
-                    log.warn("PDF file not found: {} for chapitre {}", pdfPath, chapitre.getId());
-                }
+            Path pdfPath = uploadPath.resolve(livre.getPdfPath());
+            File pdfFile = pdfPath.toFile();
+
+            if (pdfFile.exists() && pdfFile.isFile()) {
+                String attachmentName = sanitizeFilename(livre.getTitre()) + ".pdf";
+                FileSystemResource resource = new FileSystemResource(pdfFile);
+                helper.addAttachment(attachmentName, resource);
+                log.info("Attached PDF: {} for livre {}", attachmentName, livre.getId());
+            } else {
+                log.warn("PDF file not found: {} for livre {}", pdfPath, livre.getId());
             }
 
             mailSender.send(message);
-            log.info("Digital book delivery email sent to {} with {} attachments", to, chapitres.size());
+            log.info("Digital book delivery email sent to {} with PDF attachment", to);
         } catch (MessagingException e) {
             log.error("Failed to send digital book delivery email to {}: {}", to, e.getMessage());
         }
     }
 
     private String sanitizeFilename(String name) {
-        return name.replaceAll("[^a-zA-Z0-9\\u0600-\\u06FF\\s-]", "")
-                   .replaceAll("\\s+", "-")
-                   .substring(0, Math.min(name.length(), 50));
+        String sanitized = name.replaceAll("[^a-zA-Z0-9\\u0600-\\u06FF\\s-]", "")
+                               .replaceAll("\\s+", "-");
+        return sanitized.substring(0, Math.min(sanitized.length(), 50));
     }
 
     private String buildDigitalDeliveryEmail(Commande commande, String customerName, boolean hasAttachments) {

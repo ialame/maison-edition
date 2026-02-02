@@ -3,13 +3,26 @@ package com.maisonedition.controller;
 import com.maisonedition.dto.LivreDTO;
 import com.maisonedition.service.LivreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/livres")
@@ -17,6 +30,9 @@ import java.util.List;
 public class LivreController {
 
     private final LivreService livreService;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     @GetMapping
     public ResponseEntity<Page<LivreDTO>> findAll(Pageable pageable) {
@@ -104,5 +120,86 @@ public class LivreController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
     public ResponseEntity<?> getStockStats() {
         return ResponseEntity.ok(livreService.getStockStats());
+    }
+
+    @PostMapping("/{id}/pdf")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
+    public ResponseEntity<LivreDTO> uploadPdf(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.equals("application/pdf")) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            // Create pdfs subdirectory
+            Path pdfDir = Paths.get(uploadDir, "pdfs");
+            Files.createDirectories(pdfDir);
+
+            // Generate unique filename
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    : ".pdf";
+            String filename = UUID.randomUUID().toString() + extension;
+
+            // Save file
+            Path targetPath = pdfDir.resolve(filename);
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Update book with PDF path
+            return ResponseEntity.ok(livreService.updatePdfPath(id, "pdfs/" + filename));
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/{id}/pdf")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
+    public ResponseEntity<LivreDTO> deletePdf(@PathVariable Long id) {
+        LivreDTO livre = livreService.findById(id);
+
+        if (livre.getPdfPath() != null && !livre.getPdfPath().isEmpty()) {
+            try {
+                Path filePath = Paths.get(uploadDir).resolve(livre.getPdfPath()).normalize();
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                // Log error but continue to clear the path
+            }
+        }
+
+        return ResponseEntity.ok(livreService.updatePdfPath(id, null));
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<Resource> getPdf(@PathVariable Long id) {
+        LivreDTO livre = livreService.findById(id);
+
+        if (livre.getPdfPath() == null || livre.getPdfPath().isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            Path filePath = Paths.get(uploadDir).resolve(livre.getPdfPath()).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + livre.getTitre() + ".pdf\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

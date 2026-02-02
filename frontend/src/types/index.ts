@@ -18,6 +18,7 @@ export interface Livre {
   stock?: number
   seuilAlerte?: number
   stockBas?: boolean
+  pdfPath?: string | null
   auteurs: Auteur[]
   categorie: Categorie | null
   chapitres?: ChapitreList[]

@@ -11,6 +11,8 @@ const showModal = ref(false)
 const editingLivre = ref<Livre | null>(null)
 const uploading = ref(false)
 const imagePreview = ref<string | null>(null)
+const uploadingPdf = ref(false)
+const pdfFile = ref<File | null>(null)
 
 const form = ref({
   titre: '',
@@ -49,6 +51,7 @@ async function loadData() {
 }
 
 function openModal(livre?: Livre) {
+  pdfFile.value = null
   if (livre) {
     editingLivre.value = livre
     form.value = {
@@ -129,6 +132,52 @@ async function handleImageUpload(event: Event) {
 function removeImage() {
   form.value.couverture = ''
   imagePreview.value = null
+}
+
+function handlePdfSelect(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (input.files?.length) {
+    pdfFile.value = input.files[0]
+  }
+}
+
+async function uploadPdf() {
+  if (!editingLivre.value || !pdfFile.value) return
+
+  uploadingPdf.value = true
+  try {
+    await livreApi.uploadPdf(editingLivre.value.id, pdfFile.value)
+    await loadData()
+    // Refresh editing livre
+    const updated = livres.value.find(l => l.id === editingLivre.value?.id)
+    if (updated) {
+      editingLivre.value = updated
+    }
+    pdfFile.value = null
+    alert('تم رفع الملف بنجاح')
+  } catch (error) {
+    console.error('خطأ في رفع PDF:', error)
+    alert('حدث خطأ أثناء رفع الملف')
+  } finally {
+    uploadingPdf.value = false
+  }
+}
+
+async function deletePdf() {
+  if (!editingLivre.value) return
+
+  if (confirm('هل أنت متأكد من حذف ملف PDF؟')) {
+    try {
+      await livreApi.deletePdf(editingLivre.value.id)
+      await loadData()
+      const updated = livres.value.find(l => l.id === editingLivre.value?.id)
+      if (updated) {
+        editingLivre.value = updated
+      }
+    } catch (error) {
+      console.error('خطأ في حذف PDF:', error)
+    }
+  }
 }
 
 async function saveForm() {
@@ -430,6 +479,73 @@ onMounted(loadData)
               كتاب مميز
             </label>
           </div>
+
+          <!-- PDF Upload Section -->
+          <div v-if="editingLivre" class="border-t pt-4 mt-4">
+            <label class="block text-sm font-medium text-secondary-700 mb-2">ملف PDF الكتاب</label>
+            <div class="border-2 border-dashed border-secondary-300 rounded-lg p-6">
+              <!-- Show existing PDF -->
+              <div v-if="editingLivre.pdfPath" class="mb-4">
+                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                      <p class="font-medium text-secondary-800">ملف PDF محمّل</p>
+                      <p class="text-sm text-secondary-500">{{ editingLivre.pdfPath }}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    @click="deletePdf"
+                    class="btn btn-danger text-sm"
+                  >
+                    حذف
+                  </button>
+                </div>
+              </div>
+
+              <!-- Upload new PDF -->
+              <div class="text-center">
+                <svg class="w-12 h-12 text-secondary-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="text-secondary-600 mb-3">
+                  {{ editingLivre.pdfPath ? 'رفع ملف PDF جديد (سيحل محل الحالي)' : 'اختر ملف PDF للرفع' }}
+                </p>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  @change="handlePdfSelect"
+                  class="hidden"
+                  id="pdf-upload"
+                />
+                <label for="pdf-upload" class="btn btn-secondary cursor-pointer">
+                  اختيار ملف PDF
+                </label>
+                <p v-if="pdfFile" class="mt-3 text-green-600 font-medium">
+                  تم اختيار: {{ pdfFile.name }}
+                </p>
+                <button
+                  v-if="pdfFile"
+                  type="button"
+                  @click="uploadPdf"
+                  :disabled="uploadingPdf"
+                  class="btn btn-success mt-3"
+                >
+                  {{ uploadingPdf ? 'جارٍ الرفع...' : 'رفع الآن' }}
+                </button>
+              </div>
+              <p class="text-xs text-secondary-500 mt-3 text-center">
+                سيتم إرسال هذا الملف للعملاء عند شراء النسخة الرقمية
+              </p>
+            </div>
+          </div>
+          <p v-else class="text-sm text-secondary-500 italic border-t pt-4 mt-4">
+            احفظ الكتاب أولاً لتتمكن من رفع ملف PDF
+          </p>
+
           <div class="flex justify-end gap-3 pt-4">
             <button type="button" @click="showModal = false" class="btn btn-secondary">
               إلغاء

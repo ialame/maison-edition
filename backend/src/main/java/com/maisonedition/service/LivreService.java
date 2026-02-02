@@ -181,4 +181,11 @@ public class LivreService {
                 "ruptureStock", livreRepository.findLivresRuptureStock().size()
         );
     }
+
+    public LivreDTO updatePdfPath(Long id, String pdfPath) {
+        Livre livre = livreRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Livre non trouvé avec l'id: " + id));
+        livre.setPdfPath(pdfPath);
+        return LivreDTO.fromEntity(livreRepository.save(livre));
+    }
 }

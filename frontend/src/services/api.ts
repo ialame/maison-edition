@@ -80,7 +80,18 @@ export const livreApi = {
     api.get<Livre[]>('/livres/admin/rupture-stock'),
 
   getStockStats: () =>
-    api.get<{ stockBas: number; ruptureStock: number }>('/livres/admin/stock-stats')
+    api.get<{ stockBas: number; ruptureStock: number }>('/livres/admin/stock-stats'),
+
+  uploadPdf: (livreId: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<Livre>(`/livres/${livreId}/pdf`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  deletePdf: (livreId: number) =>
+    api.delete<Livre>(`/livres/${livreId}/pdf`)
 }
 
 export const auteurApi = {

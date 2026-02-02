@@ -2,6 +2,7 @@ package com.maisonedition.service;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+import com.lowagie.text.pdf.draw.LineSeparator;
 import com.maisonedition.entity.Commande;
 import com.maisonedition.entity.StatutCommande;
 import com.maisonedition.repository.CommandeRepository;
@@ -43,11 +44,11 @@ public class InvoiceService {
             document.open();
 
             // Use Helvetica for reliable PDF generation
-            Font titleFont = new Font(Font.HELVETICA, 24, Font.BOLD, new java.awt.Color(0x81, 0x39, 0x20));
-            Font headerFont = new Font(Font.HELVETICA, 12, Font.BOLD);
-            Font normalFont = new Font(Font.HELVETICA, 10);
-            Font boldFont = new Font(Font.HELVETICA, 10, Font.BOLD);
-            Font smallFont = new Font(Font.HELVETICA, 8, new java.awt.Color(0x66, 0x66, 0x66));
+            Font titleFont = new Font(Font.HELVETICA, 24f, Font.BOLD, new java.awt.Color(0x81, 0x39, 0x20));
+            Font headerFont = new Font(Font.HELVETICA, 12f, Font.BOLD);
+            Font normalFont = new Font(Font.HELVETICA, 10f);
+            Font boldFont = new Font(Font.HELVETICA, 10f, Font.BOLD);
+            Font smallFont = new Font(Font.HELVETICA, 8f, Font.NORMAL, new java.awt.Color(0x66, 0x66, 0x66));
 
             // Header with company info
             PdfPTable headerTable = new PdfPTable(2);
@@ -160,7 +161,7 @@ public class InvoiceService {
 
             // Table header
             java.awt.Color headerBg = new java.awt.Color(0x81, 0x39, 0x20);
-            Font tableHeaderFont = new Font(Font.HELVETICA, 10, Font.BOLD, java.awt.Color.WHITE);
+            Font tableHeaderFont = new Font(Font.HELVETICA, 10f, Font.BOLD, java.awt.Color.WHITE);
 
             PdfPCell descHeader = new PdfPCell(new Phrase("Description", tableHeaderFont));
             descHeader.setBackgroundColor(headerBg);

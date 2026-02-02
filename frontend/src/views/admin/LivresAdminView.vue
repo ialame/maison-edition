@@ -25,6 +25,8 @@ const form = ref({
   format: 'غلاف ورقي',
   disponible: true,
   enVedette: false,
+  stock: 0,
+  seuilAlerte: 5,
   auteurIds: [] as number[],
   categorieId: null as number | null
 })
@@ -62,6 +64,8 @@ function openModal(livre?: Livre) {
       format: livre.format || 'غلاف ورقي',
       disponible: livre.disponible,
       enVedette: livre.enVedette,
+      stock: livre.stock || 0,
+      seuilAlerte: livre.seuilAlerte || 5,
       auteurIds: livre.auteurs?.map(a => a.id) || [],
       categorieId: livre.categorie?.id || null
     }
@@ -81,6 +85,8 @@ function openModal(livre?: Livre) {
       format: 'غلاف ورقي',
       disponible: true,
       enVedette: false,
+      stock: 0,
+      seuilAlerte: 5,
       auteurIds: [],
       categorieId: null
     }
@@ -139,7 +145,9 @@ async function saveForm() {
       langue: form.value.langue || null,
       format: form.value.format || null,
       disponible: form.value.disponible,
-      enVedette: form.value.enVedette
+      enVedette: form.value.enVedette,
+      stock: form.value.stock,
+      seuilAlerte: form.value.seuilAlerte
     }
 
     if (editingLivre.value) {
@@ -192,6 +200,7 @@ onMounted(loadData)
             <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">المؤلف</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">التصنيف</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">السعر</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">المخزون</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider">الحالة</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">الإجراءات</th>
           </tr>
@@ -225,6 +234,22 @@ onMounted(loadData)
               {{ livre.prix ? `${livre.prix.toFixed(2)} ر.س` : '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <span :class="[
+                  'font-medium',
+                  livre.stock === 0 ? 'text-red-600' : livre.stockBas ? 'text-amber-600' : 'text-secondary-600'
+                ]">
+                  {{ livre.stock ?? '-' }}
+                </span>
+                <span v-if="livre.stock === 0" class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">
+                  نفد
+                </span>
+                <span v-else-if="livre.stockBas" class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800">
+                  منخفض
+                </span>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
               <span :class="[
                 'px-2 py-1 text-xs rounded-full',
                 livre.disponible ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -245,7 +270,7 @@ onMounted(loadData)
             </td>
           </tr>
           <tr v-if="livres.length === 0">
-            <td colspan="7" class="px-6 py-12 text-center text-secondary-500">
+            <td colspan="8" class="px-6 py-12 text-center text-secondary-500">
               لا توجد كتب. أضف كتابك الأول!
             </td>
           </tr>
@@ -382,6 +407,18 @@ onMounted(loadData)
           <div>
             <label class="block text-sm font-medium text-secondary-700 mb-1">تاريخ النشر</label>
             <input v-model="form.datePublication" type="date" class="input" dir="ltr" />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-secondary-700 mb-1">المخزون</label>
+              <input v-model.number="form.stock" type="number" min="0" class="input" dir="ltr" />
+              <p class="text-xs text-secondary-500 mt-1">عدد النسخ المتوفرة</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-secondary-700 mb-1">حد التنبيه</label>
+              <input v-model.number="form.seuilAlerte" type="number" min="0" class="input" dir="ltr" />
+              <p class="text-xs text-secondary-500 mt-1">تنبيه عند وصول المخزون لهذا الحد</p>
+            </div>
           </div>
           <div class="flex items-center gap-6">
             <label class="flex items-center">

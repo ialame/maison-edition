@@ -38,8 +38,15 @@ public class Commande {
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal montant;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal fraisLivraison;
+
     private String stripeSessionId;
     private String stripePaymentIntentId;
+
+    // Tracking info for paper orders
+    private String numeroSuivi;
+    private String transporteur;
 
     // Paper orders - shipping info
     private String nomComplet;

@@ -78,4 +78,31 @@ public class LivreController {
         livreService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
+    public ResponseEntity<LivreDTO> updateStock(
+            @PathVariable Long id,
+            @RequestParam Integer stock,
+            @RequestParam(required = false) Integer seuilAlerte) {
+        return ResponseEntity.ok(livreService.updateStock(id, stock, seuilAlerte));
+    }
+
+    @GetMapping("/admin/stock-bas")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
+    public ResponseEntity<List<LivreDTO>> findStockBas() {
+        return ResponseEntity.ok(livreService.findStockBas());
+    }
+
+    @GetMapping("/admin/rupture-stock")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
+    public ResponseEntity<List<LivreDTO>> findRuptureStock() {
+        return ResponseEntity.ok(livreService.findRuptureStock());
+    }
+
+    @GetMapping("/admin/stock-stats")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
+    public ResponseEntity<?> getStockStats() {
+        return ResponseEntity.ok(livreService.getStockStats());
+    }
 }

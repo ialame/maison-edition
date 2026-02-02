@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { livreApi, commandeApi, profilApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
@@ -21,13 +21,57 @@ const hasSavedAdresse = ref(false)
 const PRIX_NUMERIQUE = 10
 const PRIX_LECTURE_LIVRE = 5
 
+// Shipping costs
+const shippingCost = ref<number>(0)
+const freeShippingThreshold = ref<number>(200)
+const loadingShipping = ref(false)
+
+// Available countries
+const countries = [
+  { code: 'SA', name: 'المملكة العربية السعودية' },
+  { code: 'AE', name: 'الإمارات العربية المتحدة' },
+  { code: 'KW', name: 'الكويت' },
+  { code: 'BH', name: 'البحرين' },
+  { code: 'QA', name: 'قطر' },
+  { code: 'OM', name: 'عُمان' },
+  { code: 'JO', name: 'الأردن' },
+  { code: 'LB', name: 'لبنان' },
+  { code: 'EG', name: 'مصر' },
+  { code: 'IQ', name: 'العراق' },
+  { code: 'YE', name: 'اليمن' },
+  { code: 'SY', name: 'سوريا' },
+  { code: 'PS', name: 'فلسطين' },
+  { code: 'MA', name: 'المغرب' },
+  { code: 'DZ', name: 'الجزائر' },
+  { code: 'TN', name: 'تونس' },
+  { code: 'LY', name: 'ليبيا' },
+  { code: 'SD', name: 'السودان' },
+  { code: 'FR', name: 'فرنسا' },
+  { code: 'DE', name: 'ألمانيا' },
+  { code: 'GB', name: 'المملكة المتحدة' },
+  { code: 'ES', name: 'إسبانيا' },
+  { code: 'IT', name: 'إيطاليا' },
+  { code: 'NL', name: 'هولندا' },
+  { code: 'BE', name: 'بلجيكا' },
+  { code: 'CH', name: 'سويسرا' },
+  { code: 'AT', name: 'النمسا' },
+  { code: 'SE', name: 'السويد' },
+  { code: 'TR', name: 'تركيا' },
+  { code: 'US', name: 'الولايات المتحدة' },
+  { code: 'CA', name: 'كندا' },
+  { code: 'PK', name: 'باكستان' },
+  { code: 'IN', name: 'الهند' },
+  { code: 'MY', name: 'ماليزيا' },
+  { code: 'ID', name: 'إندونيسيا' }
+]
+
 // Shipping form for paper orders
 const shipping = ref({
   nomComplet: '',
   adresse: '',
   ville: '',
   codePostal: '',
-  pays: '',
+  pays: 'SA', // Default to Saudi Arabia
   telephone: ''
 })
 
@@ -38,7 +82,7 @@ const canSubmit = computed(() => {
   if (!selectedType.value) return false
   if (selectedType.value === 'PAPIER') {
     return shipping.value.nomComplet && shipping.value.adresse &&
-           shipping.value.ville && shipping.value.telephone
+           shipping.value.ville && shipping.value.telephone && shipping.value.pays
   }
   return true
 })
@@ -70,6 +114,10 @@ onMounted(async () => {
         // Ignore profile fetch errors
       }
     }
+    // Initialize shipping cost
+    if (shipping.value.pays) {
+      fetchShippingCost()
+    }
   } catch (err) {
     error.value = 'الكتاب غير موجود'
   } finally {
@@ -80,6 +128,42 @@ onMounted(async () => {
 function selectType(type: string) {
   selectedType.value = selectedType.value === type ? null : type
 }
+
+// Computed total for paper order
+const totalPapier = computed(() => {
+  if (!livre.value?.prix) return 0
+  return livre.value.prix + shippingCost.value
+})
+
+// Fetch shipping cost when country changes
+async function fetchShippingCost() {
+  if (!shipping.value.pays || !livre.value?.prix) return
+
+  loadingShipping.value = true
+  try {
+    const res = await commandeApi.getShippingCost(shipping.value.pays, livre.value.prix)
+    shippingCost.value = res.data.shippingCost
+    freeShippingThreshold.value = res.data.freeShippingThreshold
+  } catch (e) {
+    console.error('Failed to fetch shipping cost', e)
+  } finally {
+    loadingShipping.value = false
+  }
+}
+
+// Watch for country changes to update shipping cost
+watch(() => shipping.value.pays, () => {
+  if (selectedType.value === 'PAPIER') {
+    fetchShippingCost()
+  }
+})
+
+// Watch for type changes to fetch shipping cost when paper is selected
+watch(() => selectedType.value, (newType) => {
+  if (newType === 'PAPIER' && shipping.value.pays) {
+    fetchShippingCost()
+  }
+})
 
 async function submitOrder() {
   if (!canSubmit.value || !selectedType.value) return
@@ -270,8 +354,36 @@ async function submitOrder() {
               <input v-model="shipping.codePostal" type="text" class="input w-full" dir="ltr" placeholder="75001" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-1">البلد</label>
-              <input v-model="shipping.pays" type="text" class="input w-full" placeholder="فرنسا" />
+              <label class="block text-sm font-medium text-secondary-700 mb-1">البلد *</label>
+              <select v-model="shipping.pays" class="input w-full">
+                <option value="" disabled>اختر البلد</option>
+                <option v-for="country in countries" :key="country.code" :value="country.code">
+                  {{ country.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Shipping cost display -->
+          <div v-if="shipping.pays" class="mt-6 pt-4 border-t border-secondary-100">
+            <div class="bg-secondary-50 rounded-xl p-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-secondary-600">سعر الكتاب</span>
+                <span class="font-medium">{{ livre?.prix?.toFixed(2) }} €</span>
+              </div>
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-secondary-600">تكلفة الشحن</span>
+                <span v-if="loadingShipping" class="text-secondary-400">جاري الحساب...</span>
+                <span v-else-if="shippingCost === 0" class="text-green-600 font-medium">مجاني!</span>
+                <span v-else class="font-medium">{{ shippingCost.toFixed(2) }} €</span>
+              </div>
+              <div class="flex justify-between items-center pt-2 border-t border-secondary-200">
+                <span class="font-bold text-secondary-800">المجموع</span>
+                <span class="text-xl font-bold text-primary-700">{{ totalPapier.toFixed(2) }} €</span>
+              </div>
+              <p v-if="shippingCost > 0" class="text-xs text-secondary-500 mt-2">
+                الشحن مجاني للطلبات أكثر من {{ freeShippingThreshold }} €
+              </p>
             </div>
           </div>
           <div class="mt-4 pt-4 border-t border-secondary-100">

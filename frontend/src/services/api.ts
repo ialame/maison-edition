@@ -68,7 +68,19 @@ export const livreApi = {
     api.put<Livre>(`/livres/${id}`, livre, { params: { auteurIds, categorieId } }),
 
   delete: (id: number) =>
-    api.delete(`/livres/${id}`)
+    api.delete(`/livres/${id}`),
+
+  updateStock: (id: number, stock: number, seuilAlerte?: number) =>
+    api.put<Livre>(`/livres/${id}/stock`, null, { params: { stock, seuilAlerte } }),
+
+  getStockBas: () =>
+    api.get<Livre[]>('/livres/admin/stock-bas'),
+
+  getRuptureStock: () =>
+    api.get<Livre[]>('/livres/admin/rupture-stock'),
+
+  getStockStats: () =>
+    api.get<{ stockBas: number; ruptureStock: number }>('/livres/admin/stock-stats')
 }
 
 export const auteurApi = {
@@ -267,6 +279,12 @@ export const evenementApi = {
     api.delete(`/evenements/${id}`)
 }
 
+export interface ShippingCostResponse {
+  shippingCost: number
+  freeShippingThreshold: number
+  freeShipping: boolean
+}
+
 export const commandeApi = {
   checkout: (request: CheckoutRequest) =>
     api.post<{ checkoutUrl: string }>('/commandes/checkout', request),
@@ -278,7 +296,13 @@ export const commandeApi = {
     api.get<Commande[]>('/commandes/mes-commandes'),
 
   renew: (commandeId: number) =>
-    api.post<{ checkoutUrl: string }>(`/commandes/renouveler/${commandeId}`)
+    api.post<{ checkoutUrl: string }>(`/commandes/renouveler/${commandeId}`),
+
+  downloadInvoice: (commandeId: number) =>
+    api.get<Blob>(`/commandes/${commandeId}/facture`, { responseType: 'blob' }),
+
+  getShippingCost: (countryCode: string, orderTotal?: number) =>
+    api.get<ShippingCostResponse>('/commandes/shipping-cost', { params: { countryCode, orderTotal } })
 }
 
 export const latexApi = {

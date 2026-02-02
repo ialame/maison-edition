@@ -29,4 +29,13 @@ public interface LivreRepository extends JpaRepository<Livre, Long> {
 
     @Query("SELECT l FROM Livre l ORDER BY l.dateCreation DESC")
     List<Livre> findDernieresNouveautes(Pageable pageable);
+
+    @Query("SELECT l FROM Livre l WHERE l.stock <= l.seuilAlerte AND l.prix IS NOT NULL")
+    List<Livre> findLivresStockBas();
+
+    @Query("SELECT l FROM Livre l WHERE l.stock = 0 AND l.prix IS NOT NULL")
+    List<Livre> findLivresRuptureStock();
+
+    @Query("SELECT COUNT(l) FROM Livre l WHERE l.stock <= l.seuilAlerte AND l.prix IS NOT NULL")
+    long countLivresStockBas();
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -85,6 +86,8 @@ public class LivreService {
                 .format(dto.getFormat())
                 .disponible(dto.getDisponible() != null ? dto.getDisponible() : true)
                 .enVedette(dto.getEnVedette() != null ? dto.getEnVedette() : false)
+                .stock(dto.getStock() != null ? dto.getStock() : 0)
+                .seuilAlerte(dto.getSeuilAlerte() != null ? dto.getSeuilAlerte() : 5)
                 .build();
 
         if (auteurIds != null && !auteurIds.isEmpty()) {
@@ -120,6 +123,12 @@ public class LivreService {
         livre.setFormat(dto.getFormat());
         livre.setDisponible(dto.getDisponible());
         livre.setEnVedette(dto.getEnVedette());
+        if (dto.getStock() != null) {
+            livre.setStock(dto.getStock());
+        }
+        if (dto.getSeuilAlerte() != null) {
+            livre.setSeuilAlerte(dto.getSeuilAlerte());
+        }
 
         if (auteurIds != null) {
             List<Auteur> auteurs = auteurRepository.findAllById(auteurIds);
@@ -137,5 +146,39 @@ public class LivreService {
 
     public void delete(Long id) {
         livreRepository.deleteById(id);
+    }
+
+    public LivreDTO updateStock(Long id, Integer stock, Integer seuilAlerte) {
+        Livre livre = livreRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Livre non trouvé avec l'id: " + id));
+
+        livre.setStock(stock);
+        if (seuilAlerte != null) {
+            livre.setSeuilAlerte(seuilAlerte);
+        }
+
+        // Auto-update disponible based on stock
+        livre.setDisponible(stock > 0);
+
+        return LivreDTO.fromEntity(livreRepository.save(livre));
+    }
+
+    public List<LivreDTO> findStockBas() {
+        return livreRepository.findLivresStockBas().stream()
+                .map(LivreDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<LivreDTO> findRuptureStock() {
+        return livreRepository.findLivresRuptureStock().stream()
+                .map(LivreDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, Object> getStockStats() {
+        return Map.of(
+                "stockBas", livreRepository.countLivresStockBas(),
+                "ruptureStock", livreRepository.findLivresRuptureStock().size()
+        );
     }
 }

@@ -62,6 +62,12 @@ public class Livre {
     @Builder.Default
     private Boolean enVedette = false;
 
+    @Builder.Default
+    private Integer stock = 0;
+
+    @Builder.Default
+    private Integer seuilAlerte = 5;
+
     @ManyToMany
     @JoinTable(
         name = "livre_auteur",

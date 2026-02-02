@@ -18,6 +18,8 @@ public interface CommandeRepository extends JpaRepository<Commande, Long> {
 
     List<Commande> findByUtilisateurIdOrderByDateCommandeDesc(Long utilisateurId);
 
+    List<Commande> findAllByOrderByDateCommandeDesc();
+
     Optional<Commande> findByStripeSessionId(String stripeSessionId);
 
     List<Commande> findByUtilisateurIdAndLivreIdAndStatut(Long utilisateurId, Long livreId, StatutCommande statut);

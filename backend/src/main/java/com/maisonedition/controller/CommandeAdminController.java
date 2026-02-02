@@ -1,8 +1,10 @@
 package com.maisonedition.controller;
 
+import com.maisonedition.dto.CommandeDTO;
 import com.maisonedition.entity.Commande;
 import com.maisonedition.entity.StatutCommande;
 import com.maisonedition.repository.CommandeRepository;
+import com.maisonedition.service.CommandeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,10 +19,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/commandes")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasRole('EDITEUR')")
 public class CommandeAdminController {
 
     private final CommandeRepository commandeRepository;
+    private final CommandeService commandeService;
 
     @GetMapping
     public ResponseEntity<List<CommandeAdminDTO>> getAllCommandes() {
@@ -40,15 +43,26 @@ public class CommandeAdminController {
 
         try {
             StatutCommande statut = StatutCommande.valueOf(statutStr);
-            return commandeRepository.findById(id)
-                    .map(commande -> {
-                        commande.setStatut(statut);
-                        commandeRepository.save(commande);
-                        return ResponseEntity.ok(Map.of("message", "Statut mis à jour", "statut", statut.name()));
-                    })
-                    .orElse(ResponseEntity.notFound().build());
+            // Use CommandeService to update status - it handles sending emails for shipping notifications
+            CommandeDTO updated = commandeService.updateStatus(id, statut);
+            return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Statut invalide"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}/tracking")
+    public ResponseEntity<?> updateTracking(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String numeroSuivi = body.get("numeroSuivi");
+        String transporteur = body.get("transporteur");
+
+        try {
+            CommandeDTO updated = commandeService.updateTracking(id, numeroSuivi, transporteur);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -64,6 +78,9 @@ public class CommandeAdminController {
             String type,
             String statut,
             BigDecimal montant,
+            BigDecimal fraisLivraison,
+            String numeroSuivi,
+            String transporteur,
             String nomComplet,
             String adresse,
             String ville,
@@ -87,6 +104,9 @@ public class CommandeAdminController {
                     c.getType().name(),
                     c.getStatut().name(),
                     c.getMontant(),
+                    c.getFraisLivraison(),
+                    c.getNumeroSuivi(),
+                    c.getTransporteur(),
                     c.getNomComplet(),
                     c.getAdresse(),
                     c.getVille(),

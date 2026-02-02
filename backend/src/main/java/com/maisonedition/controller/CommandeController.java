@@ -3,7 +3,11 @@ package com.maisonedition.controller;
 import com.maisonedition.dto.CheckoutRequest;
 import com.maisonedition.dto.CommandeDTO;
 import com.maisonedition.entity.Commande;
+import com.maisonedition.entity.Utilisateur;
+import com.maisonedition.repository.UtilisateurRepository;
 import com.maisonedition.service.CommandeService;
+import com.maisonedition.service.InvoiceService;
+import com.maisonedition.service.ShippingService;
 import com.maisonedition.service.StripeService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
@@ -11,6 +15,8 @@ import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,6 +33,24 @@ public class CommandeController {
 
     private final CommandeService commandeService;
     private final StripeService stripeService;
+    private final InvoiceService invoiceService;
+    private final ShippingService shippingService;
+    private final UtilisateurRepository utilisateurRepository;
+
+    @GetMapping("/shipping-cost")
+    public ResponseEntity<?> calculateShipping(
+            @RequestParam String countryCode,
+            @RequestParam(required = false) java.math.BigDecimal orderTotal) {
+        java.math.BigDecimal shippingCost = shippingService.calculateShippingCost(countryCode, orderTotal);
+        java.math.BigDecimal freeShippingThreshold = shippingService.getFreeShippingThreshold();
+        boolean freeShipping = shippingService.qualifiesForFreeShipping(orderTotal);
+
+        return ResponseEntity.ok(Map.of(
+                "shippingCost", shippingCost,
+                "freeShippingThreshold", freeShippingThreshold,
+                "freeShipping", freeShipping
+        ));
+    }
 
     @PostMapping("/checkout")
     public ResponseEntity<?> createCheckout(
@@ -57,6 +81,30 @@ public class CommandeController {
             @AuthenticationPrincipal UserDetails userDetails) {
         List<CommandeDTO> commandes = commandeService.findByUserEmail(userDetails.getUsername());
         return ResponseEntity.ok(commandes);
+    }
+
+    @GetMapping("/{commandeId}/facture")
+    public ResponseEntity<byte[]> downloadInvoice(
+            @PathVariable Long commandeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Utilisateur user = utilisateurRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            byte[] pdfBytes = invoiceService.generateInvoice(commandeId, user.getId());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "facture-" + commandeId + ".pdf");
+            headers.setContentLength(pdfBytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+        } catch (RuntimeException e) {
+            log.error("Error generating invoice: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping("/renouveler/{commandeId}")

@@ -29,6 +29,9 @@ public class LivreDTO {
     private String format;
     private Boolean disponible;
     private Boolean enVedette;
+    private Integer stock;
+    private Integer seuilAlerte;
+    private Boolean stockBas;
     private List<AuteurDTO> auteurs;
     private CategorieDTO categorie;
 
@@ -50,6 +53,9 @@ public class LivreDTO {
                 .format(livre.getFormat())
                 .disponible(livre.getDisponible())
                 .enVedette(livre.getEnVedette())
+                .stock(livre.getStock())
+                .seuilAlerte(livre.getSeuilAlerte())
+                .stockBas(livre.getStock() != null && livre.getSeuilAlerte() != null && livre.getStock() <= livre.getSeuilAlerte())
                 .auteurs(livre.getAuteurs() != null ?
                         livre.getAuteurs().stream().map(AuteurDTO::fromEntity).collect(Collectors.toList()) : null)
                 .categorie(livre.getCategorie() != null ? CategorieDTO.fromEntity(livre.getCategorie()) : null)

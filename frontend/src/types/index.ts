@@ -15,6 +15,9 @@ export interface Livre {
   format: string | null
   disponible: boolean
   enVedette: boolean
+  stock?: number
+  seuilAlerte?: number
+  stockBas?: boolean
   auteurs: Auteur[]
   categorie: Categorie | null
   chapitres?: ChapitreList[]
@@ -162,6 +165,9 @@ export interface Commande {
   type: 'PAPIER' | 'NUMERIQUE' | 'LECTURE_LIVRE' | 'ABONNEMENT_MENSUEL' | 'ABONNEMENT_ANNUEL'
   statut: 'EN_ATTENTE' | 'PAYEE' | 'EN_PREPARATION' | 'EXPEDIEE' | 'LIVREE' | 'ANNULEE' | 'REMBOURSEE'
   montant: number
+  fraisLivraison: number | null
+  numeroSuivi: string | null
+  transporteur: string | null
   nomComplet: string | null
   adresse: string | null
   ville: string | null

@@ -14,6 +14,9 @@ interface CommandeAdmin {
   type: string
   statut: string
   montant: number
+  fraisLivraison: number | null
+  numeroSuivi: string | null
+  transporteur: string | null
   nomComplet: string | null
   adresse: string | null
   ville: string | null
@@ -24,6 +27,10 @@ interface CommandeAdmin {
   dateFinAcces: string | null
   dateCommande: string
 }
+
+// Tracking form for paper orders
+const trackingForm = ref<{[key: number]: { numeroSuivi: string, transporteur: string }}>({})
+const savingTracking = ref<number | null>(null)
 
 const commandes = ref<CommandeAdmin[]>([])
 const loading = ref(true)
@@ -83,6 +90,38 @@ async function updateStatut(id: number, newStatut: string) {
 
 function toggleExpand(id: number) {
   expandedId.value = expandedId.value === id ? null : id
+
+  // Initialize tracking form if not exists
+  if (expandedId.value === id && !trackingForm.value[id]) {
+    const commande = commandes.value.find(c => c.id === id)
+    if (commande) {
+      trackingForm.value[id] = {
+        numeroSuivi: commande.numeroSuivi || '',
+        transporteur: commande.transporteur || ''
+      }
+    }
+  }
+}
+
+async function saveTracking(id: number) {
+  savingTracking.value = id
+  try {
+    const tracking = trackingForm.value[id]
+    await api.put(`/admin/commandes/${id}/tracking`, {
+      numeroSuivi: tracking.numeroSuivi || null,
+      transporteur: tracking.transporteur || null
+    })
+    const commande = commandes.value.find(c => c.id === id)
+    if (commande) {
+      commande.numeroSuivi = tracking.numeroSuivi || null
+      commande.transporteur = tracking.transporteur || null
+    }
+    alert('تم حفظ معلومات التتبع بنجاح')
+  } catch (e: any) {
+    alert(e.response?.data?.error || 'خطأ في حفظ معلومات التتبع')
+  } finally {
+    savingTracking.value = null
+  }
 }
 
 function getTypeLabel(type: string): string {
@@ -328,6 +367,57 @@ onMounted(loadCommandes)
                 <p>{{ commande.adresse }}</p>
                 <p>{{ commande.codePostal }} {{ commande.ville }}</p>
                 <p>{{ commande.pays }}</p>
+              </div>
+            </div>
+
+            <!-- Tracking info (for paper orders) -->
+            <div v-if="commande.type === 'PAPIER'" class="md:col-span-2">
+              <h4 class="font-semibold text-secondary-700 mb-2">تتبع الشحن</h4>
+              <div class="bg-white rounded-lg p-4 border border-secondary-200">
+                <div class="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-secondary-600 mb-1">شركة الشحن</label>
+                    <select
+                      v-model="trackingForm[commande.id].transporteur"
+                      class="w-full px-3 py-2 rounded-lg border border-secondary-300 focus:ring-2 focus:ring-primary-500"
+                      @click.stop
+                    >
+                      <option value="">اختر شركة الشحن</option>
+                      <option value="DHL">DHL</option>
+                      <option value="FedEx">FedEx</option>
+                      <option value="UPS">UPS</option>
+                      <option value="Aramex">Aramex</option>
+                      <option value="Saudi Post">البريد السعودي</option>
+                      <option value="SMSA">SMSA Express</option>
+                      <option value="La Poste">La Poste</option>
+                      <option value="Chronopost">Chronopost</option>
+                      <option value="أخرى">أخرى</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-secondary-600 mb-1">رقم التتبع</label>
+                    <input
+                      v-model="trackingForm[commande.id].numeroSuivi"
+                      type="text"
+                      dir="ltr"
+                      placeholder="رقم التتبع"
+                      class="w-full px-3 py-2 rounded-lg border border-secondary-300 focus:ring-2 focus:ring-primary-500"
+                      @click.stop
+                    />
+                  </div>
+                  <div class="flex items-end">
+                    <button
+                      @click.stop="saveTracking(commande.id)"
+                      :disabled="savingTracking === commande.id"
+                      class="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    >
+                      {{ savingTracking === commande.id ? 'جارٍ الحفظ...' : 'حفظ التتبع' }}
+                    </button>
+                  </div>
+                </div>
+                <p v-if="commande.numeroSuivi" class="text-xs text-green-600 mt-2">
+                  ✓ رقم التتبع محفوظ: {{ commande.numeroSuivi }}
+                </p>
               </div>
             </div>
 

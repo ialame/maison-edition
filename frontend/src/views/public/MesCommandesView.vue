@@ -6,6 +6,28 @@ import type { Commande } from '@/types'
 
 const renewingId = ref<number | null>(null)
 const renewError = ref('')
+const downloadingId = ref<number | null>(null)
+
+async function downloadInvoice(commandeId: number) {
+  downloadingId.value = commandeId
+  try {
+    const response = await commandeApi.downloadInvoice(commandeId)
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `facture-${commandeId}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Error downloading invoice:', e)
+    renewError.value = 'حدث خطأ أثناء تحميل الفاتورة'
+  } finally {
+    downloadingId.value = null
+  }
+}
 
 async function renewSubscription(commandeId: number) {
   renewingId.value = commandeId
@@ -191,20 +213,32 @@ onMounted(async () => {
                   <p class="text-primary-700 font-bold mt-2">{{ commande.montant.toFixed(2) }} €</p>
                 </div>
               </div>
-              <div v-if="isAbonnementActif(commande)" class="mt-4 pt-4 border-t border-green-100">
-                <RouterLink to="/livres" class="text-sm text-primary-600 hover:text-primary-700">
-                  تصفح الكتب وابدأ القراءة ←
-                </RouterLink>
-              </div>
-              <div v-else class="mt-4 pt-4 border-t border-secondary-100">
-                <button
-                  @click="renewSubscription(commande.id)"
-                  :disabled="renewingId === commande.id"
-                  class="btn btn-primary text-sm"
-                >
-                  <span v-if="renewingId === commande.id" class="inline-block animate-spin mr-2">⟳</span>
-                  تجديد الاشتراك
-                </button>
+              <div class="mt-4 pt-4 border-t" :class="isAbonnementActif(commande) ? 'border-green-100' : 'border-secondary-100'">
+                <div class="flex items-center gap-4">
+                  <RouterLink v-if="isAbonnementActif(commande)" to="/livres" class="text-sm text-primary-600 hover:text-primary-700">
+                    تصفح الكتب وابدأ القراءة ←
+                  </RouterLink>
+                  <button
+                    v-if="!isAbonnementActif(commande)"
+                    @click="renewSubscription(commande.id)"
+                    :disabled="renewingId === commande.id"
+                    class="btn btn-primary text-sm"
+                  >
+                    <span v-if="renewingId === commande.id" class="inline-block animate-spin mr-2">⟳</span>
+                    تجديد الاشتراك
+                  </button>
+                  <button
+                    @click="downloadInvoice(commande.id)"
+                    :disabled="downloadingId === commande.id"
+                    class="text-sm text-secondary-600 hover:text-secondary-800 flex items-center gap-1"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span v-if="downloadingId === commande.id">جارٍ التحميل...</span>
+                    <span v-else>تحميل الفاتورة</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -266,7 +300,7 @@ onMounted(async () => {
                       <span v-if="commande.dateFinAcces"> إلى {{ formatDate(commande.dateFinAcces) }}</span>
                     </p>
                   </div>
-                  <div class="mt-2 flex items-center gap-4">
+                  <div class="mt-2 flex items-center gap-4 flex-wrap">
                     <span class="text-primary-700 font-bold">{{ commande.montant.toFixed(2) }} €</span>
                     <RouterLink
                       v-if="isAbonnementActif(commande) && commande.livreId"
@@ -283,6 +317,17 @@ onMounted(async () => {
                     >
                       <span v-if="renewingId === commande.id" class="inline-block animate-spin mr-1">⟳</span>
                       تجديد الاشتراك
+                    </button>
+                    <button
+                      @click="downloadInvoice(commande.id)"
+                      :disabled="downloadingId === commande.id"
+                      class="text-sm text-secondary-600 hover:text-secondary-800 flex items-center gap-1"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span v-if="downloadingId === commande.id">جارٍ التحميل...</span>
+                      <span v-else>الفاتورة</span>
                     </button>
                   </div>
                 </div>
@@ -335,7 +380,7 @@ onMounted(async () => {
                   <p class="text-sm text-secondary-500 mt-2">
                     تاريخ الطلب: {{ formatDate(commande.dateCommande) }}
                   </p>
-                  <div class="mt-2 flex items-center justify-between">
+                  <div class="mt-2 flex items-center gap-4 flex-wrap">
                     <span class="text-primary-700 font-bold">{{ commande.montant.toFixed(2) }} €</span>
                     <RouterLink
                       v-if="commande.type === 'NUMERIQUE' && commande.statut === 'PAYEE' && commande.livreId"
@@ -344,6 +389,17 @@ onMounted(async () => {
                     >
                       قراءة الكتاب ←
                     </RouterLink>
+                    <button
+                      @click="downloadInvoice(commande.id)"
+                      :disabled="downloadingId === commande.id"
+                      class="text-sm text-secondary-600 hover:text-secondary-800 flex items-center gap-1"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span v-if="downloadingId === commande.id">جارٍ التحميل...</span>
+                      <span v-else>تحميل الفاتورة</span>
+                    </button>
                   </div>
                   <!-- Shipping address for paper orders -->
                   <div v-if="commande.type === 'PAPIER' && commande.adresse" class="mt-4 pt-4 border-t border-secondary-100">
@@ -351,6 +407,21 @@ onMounted(async () => {
                       <span class="font-medium">عنوان التوصيل:</span>
                       {{ commande.nomComplet }} - {{ commande.adresse }}, {{ commande.ville }} {{ commande.codePostal }}
                     </p>
+                  </div>
+                  <!-- Tracking info for shipped orders -->
+                  <div v-if="commande.type === 'PAPIER' && commande.numeroSuivi" class="mt-4 pt-4 border-t border-secondary-100">
+                    <div class="bg-green-50 rounded-lg p-4">
+                      <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span class="font-medium text-green-800">تتبع الشحن</span>
+                      </div>
+                      <p class="text-sm text-secondary-700" dir="ltr">
+                        <span v-if="commande.transporteur" class="text-secondary-500">{{ commande.transporteur }}: </span>
+                        <span class="font-mono font-bold">{{ commande.numeroSuivi }}</span>
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

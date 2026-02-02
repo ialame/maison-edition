@@ -24,6 +24,8 @@ public class CommandeService {
     private final CommandeRepository commandeRepository;
     private final LivreRepository livreRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final EmailService emailService;
+    private final ShippingService shippingService;
 
     public Commande createCommande(CheckoutRequest request, String userEmail) {
         Utilisateur utilisateur = utilisateurRepository.findByEmail(userEmail)
@@ -38,6 +40,13 @@ public class CommandeService {
             livre = livreRepository.findById(request.getLivreId())
                     .orElseThrow(() -> new RuntimeException("Livre non trouvé"));
             livreId = livre.getId();
+
+            // Check stock for paper orders
+            if (type == TypeCommande.PAPIER) {
+                if (livre.getStock() == null || livre.getStock() <= 0) {
+                    throw new RuntimeException("Ce livre n'est plus en stock");
+                }
+            }
         }
 
         // Check for existing pending order for the same item/type and reuse it
@@ -59,7 +68,15 @@ public class CommandeService {
             return existingPending;
         }
 
-        BigDecimal montant = calculateMontant(livre, type);
+        BigDecimal montantProduit = calculateMontant(livre, type);
+
+        // Calculate shipping cost for paper orders
+        BigDecimal fraisLivraison = BigDecimal.ZERO;
+        if (type == TypeCommande.PAPIER && request.getPays() != null) {
+            fraisLivraison = shippingService.calculateShippingCost(request.getPays(), montantProduit);
+        }
+
+        BigDecimal montant = montantProduit.add(fraisLivraison);
 
         Commande commande = Commande.builder()
                 .utilisateur(utilisateur)
@@ -67,6 +84,7 @@ public class CommandeService {
                 .type(type)
                 .statut(StatutCommande.EN_ATTENTE)
                 .montant(montant)
+                .fraisLivraison(fraisLivraison.compareTo(BigDecimal.ZERO) > 0 ? fraisLivraison : null)
                 .build();
 
         // Set shipping info for paper orders
@@ -109,8 +127,22 @@ public class CommandeService {
             log.info("Found commande {} with current status: {}", commande.getId(), commande.getStatut());
             commande.setStatut(StatutCommande.PAYEE);
             commande.setStripePaymentIntentId(paymentIntentId);
+
+            // Decrement stock for paper orders
+            if (commande.getType() == TypeCommande.PAPIER && commande.getLivre() != null) {
+                Livre livre = commande.getLivre();
+                if (livre.getStock() != null && livre.getStock() > 0) {
+                    livre.setStock(livre.getStock() - 1);
+                    livreRepository.save(livre);
+                    log.info("Stock decremented for livre {} - new stock: {}", livre.getId(), livre.getStock());
+                }
+            }
+
             commandeRepository.save(commande);
             log.info("Commande {} updated to PAYEE", commande.getId());
+
+            // Send confirmation email
+            emailService.sendOrderConfirmation(commande);
         } else {
             log.warn("No commande found for sessionId: {}", stripeSessionId);
         }
@@ -145,6 +177,47 @@ public class CommandeService {
             case ABONNEMENT_MENSUEL -> PRIX_ABONNEMENT_MENSUEL;
             case ABONNEMENT_ANNUEL -> PRIX_ABONNEMENT_ANNUEL;
         };
+    }
+
+    public CommandeDTO updateStatus(Long commandeId, StatutCommande newStatus) {
+        Commande commande = commandeRepository.findById(commandeId)
+                .orElseThrow(() -> new RuntimeException("Commande non trouvée"));
+
+        StatutCommande oldStatus = commande.getStatut();
+        commande.setStatut(newStatus);
+        commandeRepository.save(commande);
+
+        // Send shipping notification email when order is shipped
+        if (newStatus == StatutCommande.EXPEDIEE && oldStatus != StatutCommande.EXPEDIEE) {
+            emailService.sendShippingNotification(commande);
+        }
+
+        return CommandeDTO.fromEntity(commande);
+    }
+
+    public List<CommandeDTO> findAll() {
+        return commandeRepository.findAllByOrderByDateCommandeDesc()
+                .stream()
+                .map(CommandeDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public CommandeDTO updateTracking(Long commandeId, String numeroSuivi, String transporteur) {
+        Commande commande = commandeRepository.findById(commandeId)
+                .orElseThrow(() -> new RuntimeException("Commande non trouvée"));
+
+        boolean trackingAdded = commande.getNumeroSuivi() == null && numeroSuivi != null;
+
+        commande.setNumeroSuivi(numeroSuivi);
+        commande.setTransporteur(transporteur);
+        commandeRepository.save(commande);
+
+        // Send tracking notification email if tracking number was just added
+        if (trackingAdded && numeroSuivi != null && !numeroSuivi.isBlank()) {
+            emailService.sendTrackingNotification(commande);
+        }
+
+        return CommandeDTO.fromEntity(commande);
     }
 
     public Commande createRenewal(Long commandeId, String userEmail) {

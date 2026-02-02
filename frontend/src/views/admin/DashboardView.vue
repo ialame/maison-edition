@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { livreApi, auteurApi, articleApi, evenementApi } from '@/services/api'
+import type { Livre } from '@/types'
 
 const stats = ref({
   livres: 0,
@@ -9,15 +10,22 @@ const stats = ref({
   articles: 0,
   evenements: 0
 })
+const stockStats = ref({
+  stockBas: 0,
+  ruptureStock: 0
+})
+const livresStockBas = ref<Livre[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const [livresRes, auteursRes, articlesRes, evenementsRes] = await Promise.all([
+    const [livresRes, auteursRes, articlesRes, evenementsRes, stockStatsRes, stockBasRes] = await Promise.all([
       livreApi.getAll(0, 1),
       auteurApi.getAll(),
       articleApi.getAll(),
-      evenementApi.getAll()
+      evenementApi.getAll(),
+      livreApi.getStockStats(),
+      livreApi.getStockBas()
     ])
     stats.value = {
       livres: livresRes.data.totalElements,
@@ -25,6 +33,8 @@ onMounted(async () => {
       articles: articlesRes.data.length,
       evenements: evenementsRes.data.length
     }
+    stockStats.value = stockStatsRes.data
+    livresStockBas.value = stockBasRes.data.slice(0, 5) // Top 5
   } catch (error) {
     console.error('خطأ في تحميل الإحصائيات:', error)
   } finally {
@@ -116,15 +126,73 @@ const statsConfig = [
       </div>
     </div>
 
-    <!-- Recent Activity (placeholder for future enhancement) -->
+    <!-- Stock Alerts -->
     <div class="card-elegant p-8">
-      <h3 class="text-2xl font-arabic font-bold text-secondary-800 mb-6">النشاط الأخير</h3>
-      <div class="text-center py-12 text-secondary-500">
-        <svg class="w-16 h-16 mx-auto mb-4 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-red-500 rounded-xl flex items-center justify-center ml-4">
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-arabic font-bold text-secondary-800">تنبيهات المخزون</h3>
+        </div>
+        <div class="flex gap-4">
+          <div v-if="stockStats.ruptureStock > 0" class="px-4 py-2 bg-red-100 text-red-800 rounded-lg">
+            <span class="font-bold">{{ stockStats.ruptureStock }}</span> نفدت
+          </div>
+          <div v-if="stockStats.stockBas > 0" class="px-4 py-2 bg-amber-100 text-amber-800 rounded-lg">
+            <span class="font-bold">{{ stockStats.stockBas }}</span> مخزون منخفض
+          </div>
+        </div>
+      </div>
+
+      <div v-if="livresStockBas.length > 0" class="space-y-3">
+        <div
+          v-for="livre in livresStockBas"
+          :key="livre.id"
+          class="flex items-center justify-between p-4 bg-secondary-50 rounded-xl hover:bg-secondary-100 transition-colors"
+        >
+          <div class="flex items-center gap-4">
+            <img
+              v-if="livre.couverture"
+              :src="`/uploads/${livre.couverture}`"
+              :alt="livre.titre"
+              class="w-12 h-16 object-cover rounded shadow"
+            />
+            <div v-else class="w-12 h-16 bg-secondary-200 rounded flex items-center justify-center">
+              <svg class="w-6 h-6 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium text-secondary-800">{{ livre.titre }}</p>
+              <p class="text-sm text-secondary-500">{{ livre.auteurs?.map(a => `${a.prenom} ${a.nom}`).join('، ') }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <span :class="[
+              'px-3 py-1 rounded-full text-sm font-medium',
+              livre.stock === 0 ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+            ]">
+              {{ livre.stock === 0 ? 'نفد المخزون' : `${livre.stock} نسخة متبقية` }}
+            </span>
+            <RouterLink
+              :to="`/admin/livres`"
+              class="text-primary-600 hover:text-primary-800 text-sm font-medium"
+            >
+              تعديل المخزون
+            </RouterLink>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="text-center py-12 text-secondary-500">
+        <svg class="w-16 h-16 mx-auto mb-4 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p class="text-lg">لا توجد أنشطة حديثة</p>
-        <p class="text-sm">ستظهر هنا آخر التحديثات والإضافات</p>
+        <p class="text-lg text-green-600">جميع الكتب متوفرة في المخزون</p>
+        <p class="text-sm">لا توجد تنبيهات حالياً</p>
       </div>
     </div>
   </div>

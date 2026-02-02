@@ -122,7 +122,7 @@ public class CommandeService {
 
     public void markAsPaid(String stripeSessionId, String paymentIntentId) {
         log.info("markAsPaid called with sessionId: {}", stripeSessionId);
-        var optionalCommande = commandeRepository.findByStripeSessionId(stripeSessionId);
+        var optionalCommande = commandeRepository.findByStripeSessionIdWithDetails(stripeSessionId);
         if (optionalCommande.isPresent()) {
             Commande commande = optionalCommande.get();
             log.info("Found commande {} with current status: {}", commande.getId(), commande.getStatut());
@@ -144,6 +144,12 @@ public class CommandeService {
 
             // Send confirmation email
             emailService.sendOrderConfirmation(commande);
+
+            // For digital orders, send the PDF files
+            if (commande.getType() == TypeCommande.NUMERIQUE) {
+                log.info("Sending digital book delivery for commande {}", commande.getId());
+                emailService.sendDigitalBookDelivery(commande);
+            }
         } else {
             log.warn("No commande found for sessionId: {}", stripeSessionId);
         }

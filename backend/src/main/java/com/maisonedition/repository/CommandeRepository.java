@@ -22,6 +22,9 @@ public interface CommandeRepository extends JpaRepository<Commande, Long> {
 
     Optional<Commande> findByStripeSessionId(String stripeSessionId);
 
+    @Query("SELECT c FROM Commande c LEFT JOIN FETCH c.livre LEFT JOIN FETCH c.utilisateur WHERE c.stripeSessionId = :sessionId")
+    Optional<Commande> findByStripeSessionIdWithDetails(@Param("sessionId") String sessionId);
+
     List<Commande> findByUtilisateurIdAndLivreIdAndStatut(Long utilisateurId, Long livreId, StatutCommande statut);
 
     /**

@@ -1,0 +1,19 @@
+Essentiels :
+  1. Mode plein écran - Lecture immersive sans distractions
+  2. Estimation du temps de lecture - "X min restantes"
+  3. Choix de police - Seulement Amiri actuellement
+  4. Ajustement des marges - Largeur du texte personnalisable
+  5. Gestes tactiles - Swipe gauche/droite pour changer de chapitre sur mobile
+
+  Avancés :
+  6. Signets/Marque-pages - Sauvegarder des passages
+  7. Surlignage et annotations - Notes personnelles
+  8. Recherche dans le texte - Recherche intégrée dans le chapitre
+  9. Zoom sur images - Lightbox pour agrandir
+  10. Partage de passages - Copier un extrait formaté
+
+  Fonctionnalités premium :
+  11. Synchronisation compte - Progression sauvée côté serveur
+  12. Text-to-speech - Lecture audio (Web Speech API)
+  13. Mode offline / PWA - Lecture hors connexion
+  14. Historique de lecture - Livres/chapitres récents

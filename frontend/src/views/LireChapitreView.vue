@@ -21,15 +21,25 @@ const showSettings = ref(false)
 const contentRef = ref<HTMLDivElement | null>(null)
 const readingProgress = ref(0)
 
+// Fullscreen state
+const isFullscreen = ref(false)
+
 // Reading preferences with localStorage persistence
 type Theme = 'light' | 'sepia' | 'dark'
+type FontFamily = 'Amiri' | 'Tajawal' | 'Noto Naskh Arabic'
+type ContentWidth = 'narrow' | 'medium' | 'wide'
+
 const fontSize = ref(Number(localStorage.getItem('reader-fontSize') || '20'))
 const lineHeight = ref(Number(localStorage.getItem('reader-lineHeight') || '2'))
 const theme = ref<Theme>((localStorage.getItem('reader-theme') as Theme) || 'sepia')
+const fontFamily = ref<FontFamily>((localStorage.getItem('reader-fontFamily') as FontFamily) || 'Amiri')
+const contentWidth = ref<ContentWidth>((localStorage.getItem('reader-contentWidth') as ContentWidth) || 'medium')
 
 watch(fontSize, v => localStorage.setItem('reader-fontSize', String(v)))
 watch(lineHeight, v => localStorage.setItem('reader-lineHeight', String(v)))
 watch(theme, v => localStorage.setItem('reader-theme', v))
+watch(fontFamily, v => localStorage.setItem('reader-fontFamily', v))
+watch(contentWidth, v => localStorage.setItem('reader-contentWidth', v))
 
 const themeConfig = {
   light: { bg: 'bg-white', text: 'text-gray-900', header: 'bg-white/95 border-gray-200', headerText: 'text-gray-800', headerMuted: 'text-gray-500', accent: 'text-primary-700', borderColor: 'border-gray-200' },
@@ -38,6 +48,20 @@ const themeConfig = {
 }
 
 const currentTheme = computed(() => themeConfig[theme.value])
+
+const contentMaxWidth = computed(() => ({
+  narrow: 'max-w-2xl',  // 672px
+  medium: 'max-w-4xl',  // 896px
+  wide: 'max-w-6xl'     // 1152px
+}[contentWidth.value]))
+
+// Reading time estimation (180 words/min for Arabic)
+const readingTime = computed(() => {
+  if (!chapitre.value?.contenu) return 0
+  const text = chapitre.value.contenu.replace(/<[^>]*>/g, '')
+  const words = text.trim().split(/\s+/).length
+  return Math.ceil(words / 180)
+})
 
 const livreId = computed(() => Number(route.params.livreId))
 const numero = computed(() => Number(route.params.numero))
@@ -223,6 +247,48 @@ function decreaseLineHeight() {
   if (lineHeight.value > 1.25) lineHeight.value = Math.round((lineHeight.value - 0.25) * 100) / 100
 }
 
+// Fullscreen toggle
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen()
+    isFullscreen.value = true
+  } else {
+    document.exitFullscreen()
+    isFullscreen.value = false
+  }
+}
+
+function onFullscreenChange() {
+  isFullscreen.value = !!document.fullscreenElement
+}
+
+// Touch swipe handling for mobile navigation
+let touchStartX = 0
+let touchEndX = 0
+
+function onTouchStart(e: TouchEvent) {
+  touchStartX = e.changedTouches[0].screenX
+}
+
+function onTouchEnd(e: TouchEvent) {
+  touchEndX = e.changedTouches[0].screenX
+  handleSwipe()
+}
+
+function handleSwipe() {
+  const diff = touchStartX - touchEndX
+  const threshold = 80 // minimum pixels to trigger
+
+  if (Math.abs(diff) < threshold) return
+
+  // RTL: swipe left = previous, swipe right = next
+  if (diff > 0 && previousChapitre.value) {
+    goToChapitre(previousChapitre.value.numero)
+  } else if (diff < 0 && nextChapitre.value) {
+    goToChapitre(nextChapitre.value.numero)
+  }
+}
+
 function onKeydown(e: KeyboardEvent) {
   // Don't intercept if user is typing in an input
   if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return
@@ -245,11 +311,13 @@ onMounted(() => {
   loadData()
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('keydown', onKeydown)
+  document.addEventListener('fullscreenchange', onFullscreenChange)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('keydown', onKeydown)
+  document.removeEventListener('fullscreenchange', onFullscreenChange)
 })
 </script>
 
@@ -331,6 +399,21 @@ onUnmounted(() => {
               </button>
             </template>
 
+            <!-- Fullscreen toggle -->
+            <button
+              @click="toggleFullscreen"
+              class="p-2 rounded-lg transition-colors"
+              :class="[currentTheme.headerMuted, theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-amber-100']"
+              :title="isFullscreen ? 'الخروج من الشاشة الكاملة' : 'شاشة كاملة'"
+            >
+              <svg v-if="!isFullscreen" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+              </svg>
+            </button>
+
             <!-- Table of contents toggle -->
             <button
               @click="showTableOfContents = !showTableOfContents"
@@ -352,7 +435,7 @@ onUnmounted(() => {
         class="border-t px-4 py-4 transition-colors duration-300"
         :class="[theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-amber-100']"
       >
-        <div class="container mx-auto max-w-2xl">
+        <div class="container mx-auto max-w-3xl">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Theme selection -->
             <div>
@@ -413,6 +496,89 @@ onUnmounted(() => {
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Font family selection -->
+            <div>
+              <label class="text-xs font-medium mb-2 block" :class="currentTheme.headerMuted">نوع الخط</label>
+              <div class="flex gap-2">
+                <button
+                  @click="fontFamily = 'Amiri'"
+                  class="flex-1 py-2 px-3 rounded-lg border-2 text-sm transition-all"
+                  :class="[
+                    fontFamily === 'Amiri'
+                      ? (theme === 'dark' ? 'border-amber-500 bg-gray-700 text-gray-100' : 'border-primary-500 bg-primary-50 text-primary-800')
+                      : (theme === 'dark' ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400')
+                  ]"
+                  style="font-family: 'Amiri', serif;"
+                >
+                  أميري
+                </button>
+                <button
+                  @click="fontFamily = 'Tajawal'"
+                  class="flex-1 py-2 px-3 rounded-lg border-2 text-sm transition-all"
+                  :class="[
+                    fontFamily === 'Tajawal'
+                      ? (theme === 'dark' ? 'border-amber-500 bg-gray-700 text-gray-100' : 'border-primary-500 bg-primary-50 text-primary-800')
+                      : (theme === 'dark' ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400')
+                  ]"
+                  style="font-family: 'Tajawal', sans-serif;"
+                >
+                  تجوال
+                </button>
+                <button
+                  @click="fontFamily = 'Noto Naskh Arabic'"
+                  class="flex-1 py-2 px-3 rounded-lg border-2 text-sm transition-all"
+                  :class="[
+                    fontFamily === 'Noto Naskh Arabic'
+                      ? (theme === 'dark' ? 'border-amber-500 bg-gray-700 text-gray-100' : 'border-primary-500 bg-primary-50 text-primary-800')
+                      : (theme === 'dark' ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400')
+                  ]"
+                  style="font-family: 'Noto Naskh Arabic', serif;"
+                >
+                  نسخ
+                </button>
+              </div>
+            </div>
+
+            <!-- Content width selection -->
+            <div>
+              <label class="text-xs font-medium mb-2 block" :class="currentTheme.headerMuted">عرض النص</label>
+              <div class="flex gap-2">
+                <button
+                  @click="contentWidth = 'narrow'"
+                  class="flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all"
+                  :class="[
+                    contentWidth === 'narrow'
+                      ? (theme === 'dark' ? 'border-amber-500 bg-gray-700 text-gray-100' : 'border-primary-500 bg-primary-50 text-primary-800')
+                      : (theme === 'dark' ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400')
+                  ]"
+                >
+                  ضيق
+                </button>
+                <button
+                  @click="contentWidth = 'medium'"
+                  class="flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all"
+                  :class="[
+                    contentWidth === 'medium'
+                      ? (theme === 'dark' ? 'border-amber-500 bg-gray-700 text-gray-100' : 'border-primary-500 bg-primary-50 text-primary-800')
+                      : (theme === 'dark' ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400')
+                  ]"
+                >
+                  متوسط
+                </button>
+                <button
+                  @click="contentWidth = 'wide'"
+                  class="flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all"
+                  :class="[
+                    contentWidth === 'wide'
+                      ? (theme === 'dark' ? 'border-amber-500 bg-gray-700 text-gray-100' : 'border-primary-500 bg-primary-50 text-primary-800')
+                      : (theme === 'dark' ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400')
+                  ]"
+                >
+                  عريض
                 </button>
               </div>
             </div>
@@ -502,7 +668,11 @@ onUnmounted(() => {
     </div>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-12">
+    <main
+      class="container mx-auto px-4 py-12"
+      @touchstart="onTouchStart"
+      @touchend="onTouchEnd"
+    >
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-24">
         <div class="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-700"></div>
@@ -548,7 +718,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Chapter Content -->
-      <article v-else-if="chapitre" class="max-w-4xl mx-auto">
+      <article v-else-if="chapitre" class="mx-auto" :class="contentMaxWidth">
         <!-- Chapter Header -->
         <header class="text-center mb-12 pb-12 border-b-2" :class="currentTheme.borderColor">
           <p class="font-medium mb-2" :class="theme === 'dark' ? 'text-amber-400' : 'text-primary-600'">الفصل {{ chapitre.numero }}</p>
@@ -564,6 +734,12 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
               {{ livre.titre }}
+            </span>
+            <span v-if="readingTime > 0" class="flex items-center">
+              <svg class="w-5 h-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ readingTime }} دقائق للقراءة
             </span>
           </div>
         </header>
@@ -585,11 +761,11 @@ onUnmounted(() => {
         <!-- Text Content (HTML from TipTap) -->
         <div
           ref="contentRef"
-          class="prose prose-lg max-w-none reading-content font-serif"
+          class="prose prose-lg max-w-none reading-content"
           :class="[
             theme === 'dark' ? 'reading-dark' : theme === 'sepia' ? 'reading-sepia' : 'reading-light'
           ]"
-          :style="{ fontSize: `${fontSize}px`, lineHeight: lineHeight }"
+          :style="{ fontSize: `${fontSize}px`, lineHeight: lineHeight, fontFamily: `'${fontFamily}', serif` }"
           v-html="chapitre.contenu"
         ></div>
 
@@ -645,9 +821,10 @@ onUnmounted(() => {
             <div v-else></div>
           </div>
 
-          <!-- Keyboard shortcuts hint -->
+          <!-- Navigation hints -->
           <p class="text-center text-xs mt-8 opacity-60" :class="currentTheme.headerMuted">
-            استخدم مفاتيح الأسهم ← → للتنقل بين الفصول
+            <span class="hidden sm:inline">استخدم مفاتيح الأسهم ← → للتنقل بين الفصول</span>
+            <span class="sm:hidden">اسحب يميناً أو يساراً للتنقل بين الفصول</span>
           </p>
         </footer>
       </article>

@@ -42,6 +42,10 @@ public class Utilisateur {
     private String codePostal;
     private String pays;
 
+    // Session unique - token de la session active
+    @Column(length = 500)
+    private String activeSessionToken;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateCreation;
 

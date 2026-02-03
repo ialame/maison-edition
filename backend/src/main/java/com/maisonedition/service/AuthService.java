@@ -39,8 +39,6 @@ public class AuthService {
                 .actif(true)
                 .build();
 
-        utilisateurRepository.save(utilisateur);
-
         UserDetails userDetails = new User(
                 utilisateur.getEmail(),
                 utilisateur.getMotDePasse(),
@@ -48,6 +46,10 @@ public class AuthService {
         );
 
         String token = jwtService.generateToken(userDetails);
+
+        // Session unique : sauvegarder le token actif
+        utilisateur.setActiveSessionToken(token);
+        utilisateurRepository.save(utilisateur);
 
         return AuthDTO.AuthResponse.builder()
                 .token(token)
@@ -76,6 +78,10 @@ public class AuthService {
         );
 
         String token = jwtService.generateToken(userDetails);
+
+        // Session unique : sauvegarder le token actif (invalide les sessions précédentes)
+        utilisateur.setActiveSessionToken(token);
+        utilisateurRepository.save(utilisateur);
 
         return AuthDTO.AuthResponse.builder()
                 .token(token)

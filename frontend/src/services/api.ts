@@ -25,6 +25,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      // Vérifier si c'est une déconnexion due à une autre session
+      const errorData = error.response?.data
+      if (errorData?.error === 'SESSION_EXPIRED') {
+        // Stocker le message pour l'afficher sur la page de login
+        localStorage.setItem('sessionExpiredMessage', errorData.message || 'Vous avez été déconnecté car une nouvelle connexion a été détectée.')
+      }
       window.location.href = '/login'
     }
     return Promise.reject(error)
